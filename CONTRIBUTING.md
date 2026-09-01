@@ -1,0 +1,65 @@
+# Contributing
+
+This is a small project with a narrow purpose: one printer, one link, the
+people you send it to. It is not trying to become a platform, and a change that
+moves it that way will probably be turned down however good it is.
+
+That said — bug reports, printer profiles, and documentation fixes are all
+welcome, and the last one most of all.
+
+## Before you open a pull request
+
+```sh
+cd worker && npm test
+python3 agent/test_loop.py
+python3 firmware/test_loop.py
+```
+
+All three run without hardware.
+
+## How this codebase is written
+
+The comments explain **why**, not what, and they are long. That is deliberate.
+Most of them exist because something went wrong once and the next person needed
+to know — several say plainly "do not remove this", and those cost a day each.
+
+If you change something here:
+
+* **Match the comment density.** A change with no explanation, in a file where
+  every decision is explained, reads as an accident.
+* **If you remove a safeguard, say why it is no longer needed.** Not "removed
+  unused check".
+* **Do not reflow or reword existing comments** while doing something else. It
+  makes the diff unreadable and buries the actual change.
+
+## Things that will be turned down
+
+* **Anything that weakens the defaults.** Nothing prints without approval; rate
+  limits are on; proof-of-work is on. If a demo is awkward because of those,
+  the demo is wrong.
+* **A framework.** The page is plain HTML and ES modules with no build step,
+  and that is a feature: somebody who has never used a bundler can edit it and
+  see the result.
+* **A query on a hot path with no cost test.** The database plan is billed per
+  row read, and three perfectly correct queries once exhausted a whole day's
+  allowance in an afternoon. See `worker/test/d1-cost.test.mjs` and
+  [docs/07-operating.md §4](docs/07-operating.md).
+* **Terms added to `worker/src/terms.js`.** The starter list stays small on
+  purpose. Yours belongs in your own deployment, and out of your public
+  repository — [docs/06-moderation.md](docs/06-moderation.md) explains why.
+
+## Things that are very welcome
+
+* **A printer profile that works.** `worker/src/profiles.js`, plus a line in
+  [docs/04-printers.md](docs/04-printers.md) saying what you tested it on.
+* **Protocol findings.** [docs/09-protocol.md](docs/09-protocol.md) has a "what
+  is still unknown" section at the bottom. Same rule as the rest of that file:
+  nothing goes in without evidence, and say how you measured.
+* **Documentation that failed you.** If a step in the quick start did not work
+  on your machine, that is a bug in the document. Say what you saw.
+
+## Licence
+
+By contributing you agree your work is released under the AGPL-3.0, like the
+rest. See [NOTICE](NOTICE) for what that does and does not cover — in
+particular, it does not cover names.

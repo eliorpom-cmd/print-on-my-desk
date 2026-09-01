@@ -1,0 +1,70 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  // The name your Worker gets. It becomes the first part of its address, in
+  // front of the subdomain Cloudflare gives your account.
+  // Change it to whatever you want the printer to be called.
+  "name": "print-on-my-desk",
+
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-27",
+
+  // Only needed if your Cloudflare login has more than one account. Wrangler
+  // will tell you, and print the ids, the first time it cannot choose.
+  // "account_id": "YOUR_ACCOUNT_ID",
+
+  // Fill this in once, from `npx wrangler d1 create printer`. It prints a
+  // block that looks exactly like the one below - copy the id across.
+  //
+  // The id is not a secret. It is useless without an authenticated account,
+  // and having it here is what lets a fresh clone deploy without hunting
+  // through the dashboard. Do not put anything else here: secrets go in
+  // `wrangler secret put`, never in this file.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "printer",
+      "database_id": "PASTE_YOUR_DATABASE_ID_HERE"
+    }
+  ],
+
+  // The page and the API from one deployment: no second origin, no CORS
+  // between the page and its own backend. Files are served first; anything
+  // with no matching file falls through to the Worker, which is how /api/*
+  // works.
+  //
+  // not_found_handling is "none" on purpose: the Worker owns every path that
+  // is not a file on disk, /admin included.
+  "assets": {
+    "directory": "../web",
+    "not_found_handling": "none"
+  },
+
+  // Moderation, using Cloudflare's own models. The free allowance is generous
+  // and the word list answers most abusive messages before a model is asked.
+  //
+  // If you would rather not use it at all: delete this line and set the
+  // `moderation` setting to 0 from /admin. The word list still runs.
+  "ai": { "binding": "AI" },
+
+  // Housekeeping that has to happen even when nobody is polling: messages
+  // expiring, spent proof-of-work challenges being swept up, and the queue
+  // counters being reconciled once a day.
+  "triggers": { "crons": ["*/10 * * * *"] },
+
+  "observability": { "enabled": true }
+
+  // SECRETS GO HERE — no, they do not. Set each one with
+  // `npx wrangler secret put NAME`:
+  //
+  //   PRINTER_TOKEN   required. Shared with whatever drives your printer.
+  //   ADMIN_TOKEN     required. Gets you into /admin.
+  //   IP_SALT         required. Salts the hash used for rate limiting, so the
+  //                   database never holds an address.
+  //   ALTCHA_HMAC_KEY optional. Signs proof-of-work challenges. Falls back to
+  //                   IP_SALT if unset.
+  //   ACCESS_KEY      optional. The private door: a #k=<key> link that opens
+  //                   the form while the service is closed to everyone else.
+  //   DISCORD_WEBHOOK optional. Where messages waiting for you are announced.
+  //   NTFY_TOPIC      optional. The same, through ntfy.sh.
+}

@@ -1,0 +1,222 @@
+/* The page.
+ *
+ * Deliberately plain, and deliberately in one file with no build step: the
+ * point of this project is that somebody can change it. A design system you
+ * have to learn before you can move a margin is a design system that stops
+ * people from making the thing theirs.
+ *
+ * Everything worth changing is in :root. Change the four colours and the two
+ * fonts and it is a different site.
+ */
+
+:root {
+  --paper: #f4f1ea;
+  --ink: #14130f;
+  --mute: #6d6a62;
+  --slot: #14130f;
+  --ok: #2f7a45;
+  --warn: #a8620f;
+  --off: #9a9791;
+
+  --display: "Kode Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --body: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --edge: 1.25rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #14130f;
+    --ink: #f4f1ea;
+    --mute: #9a9791;
+    --slot: #f4f1ea;
+    --ok: #6fc98a;
+    --warn: #e2a45c;
+    --off: #55524c;
+  }
+}
+
+@font-face {
+  font-family: "Kode Mono";
+  src: url("/fonts/kode-mono-latin.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+2000-206F, U+2192, U+2212;
+}
+@font-face {
+  font-family: "Kode Mono";
+  src: url("/fonts/kode-mono-latin-ext.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020-20AB;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: var(--edge);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+}
+
+main { max-width: 34rem; margin: 0 auto; }
+
+.sr {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* --- header --------------------------------------------------------------- */
+
+.head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 1rem; margin-bottom: 1.5rem;
+}
+
+h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(20px, 6vw, 28px);
+  letter-spacing: 0.06em;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.head__side { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+
+.state {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  margin: 0; font-size: 12px; color: var(--mute);
+  letter-spacing: 0.04em; text-transform: lowercase;
+}
+.state__mark {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--off);
+}
+.state--ready .state__mark { background: var(--ok); }
+.state--warn .state__mark { background: var(--warn); }
+.state--paused .state__mark { background: var(--off); }
+
+.tally { margin: 0; font-size: 12px; color: var(--mute); }
+
+.info {
+  width: 1.6rem; height: 1.6rem; border-radius: 50%;
+  border: 1px solid var(--mute); background: none; color: var(--mute);
+  font-family: var(--display); font-size: 12px; cursor: pointer;
+  line-height: 1;
+}
+.info:hover { border-color: var(--ink); color: var(--ink); }
+
+.notes {
+  border: 1px solid var(--mute); padding: 0.9rem 1rem;
+  margin-bottom: 1.5rem; font-size: 13px; color: var(--mute);
+}
+.notes ul { margin: 0; padding-left: 1.1rem; }
+.notes li + li { margin-top: 0.35rem; }
+
+.lede { margin: 0 0 1.5rem; color: var(--mute); }
+
+/* --- the form ------------------------------------------------------------- */
+
+textarea, input[type="text"] {
+  width: 100%; padding: 0.8rem;
+  background: transparent; color: var(--ink);
+  border: 1px solid var(--ink);
+  font: inherit; resize: vertical;
+}
+textarea:focus, input[type="text"]:focus {
+  outline: 2px solid var(--ink); outline-offset: 2px;
+}
+
+.row {
+  display: flex; align-items: center; gap: 0.75rem; margin: 0.75rem 0 1rem;
+}
+.row input { flex: 1; }
+.count { margin: 0; font-size: 12px; color: var(--mute); white-space: nowrap; }
+
+button[type="submit"] {
+  width: 100%; padding: 0.95rem;
+  background: var(--ink); color: var(--paper);
+  border: 1px solid var(--ink);
+  font-family: var(--display); font-weight: 700; font-size: 15px;
+  letter-spacing: 0.12em; cursor: pointer;
+  transition: background-color 0.12s linear, color 0.12s linear;
+}
+button[type="submit"]:hover:not(:disabled) { background: var(--paper); color: var(--ink); }
+button[type="submit"]:disabled { opacity: 0.5; cursor: default; }
+
+.over { border-top: 1px solid var(--mute); margin-top: 2rem; padding-top: 1.5rem; }
+.over h2 { font-family: var(--display); font-size: 18px; margin: 0 0 0.75rem; }
+.over a { color: var(--ink); margin-right: 1rem; }
+
+/* --- the printing animation ----------------------------------------------- */
+/*
+ * The page goes white, a slot opens, and the paper comes out of it. The pixels
+ * are not a drawing: app.js renders the ticket with the same code the Worker
+ * uses, so what you watch is what the print head lays down.
+ */
+
+.print {
+  position: fixed; inset: 0; z-index: 10;
+  background: var(--paper);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 3rem 1rem;
+  overflow-y: auto;
+}
+
+.print__slot {
+  width: min(320px, 86vw); height: 3px; background: var(--slot);
+  flex-shrink: 0;
+}
+
+.print__strip {
+  width: min(320px, 86vw);
+  overflow: hidden;
+  height: 0;
+  transition: height 1.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.print__strip canvas {
+  display: block; width: 100%; height: auto;
+  image-rendering: pixelated;
+}
+
+.print__note {
+  margin: 1.5rem 0 0; color: var(--mute); font-size: 13px;
+  text-align: center; max-width: 24rem;
+}
+
+.print__close {
+  margin-top: 1.5rem; padding: 0.7rem 1.2rem;
+  background: none; color: var(--ink); border: 1px solid var(--ink);
+  font-family: var(--display); font-size: 13px; letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.print__close:hover { background: var(--ink); color: var(--paper); }
+
+/* --- the optional invitation ---------------------------------------------- */
+
+.sheet {
+  position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%);
+  width: min(28rem, calc(100vw - 2rem)); z-index: 20;
+  background: var(--paper); border: 1px solid var(--ink);
+  padding: 1rem 1.1rem;
+}
+.sheet h2 { font-family: var(--display); font-size: 15px; margin: 0 0 0.4rem; }
+.sheet p { margin: 0 0 0.8rem; font-size: 13px; color: var(--mute); }
+.sheet a {
+  display: inline-block; padding: 0.5rem 0.9rem; margin-right: 0.6rem;
+  background: var(--ink); color: var(--paper); text-decoration: none;
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.08em;
+}
+.sheet button {
+  background: none; border: none; color: var(--mute);
+  font: inherit; font-size: 12px; cursor: pointer; text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .print__strip { transition: none; }
+}

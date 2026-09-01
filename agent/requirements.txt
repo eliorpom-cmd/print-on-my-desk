@@ -1,0 +1,5 @@
+# The agent's only dependency, and it has it because there is no other way to
+# speak to a USB printer from Python. Everything else - HTTP, JSON, base64 -
+# is the standard library, on purpose: this runs unattended on a box in a flat,
+# and every package added is a package to keep up to date there.
+pyusb>=1.2

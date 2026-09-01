@@ -1,0 +1,17 @@
+{
+  "name": "print-on-my-desk-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test test/*.test.mjs",
+    "db:local": "wrangler d1 execute printer --local --file=schema.sql",
+    "db:remote": "wrangler d1 execute printer --remote --file=schema.sql"
+  },
+  "devDependencies": {
+    "linkedom": "^0.18.13",
+    "wrangler": "^4.114.0"
+  }
+}

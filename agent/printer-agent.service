@@ -1,0 +1,45 @@
+# systemd unit for the always-on agent.
+#
+# Copy it, edit the three obvious lines, install it:
+#
+#   sudo cp agent/printer-agent.service /etc/systemd/system/
+#   sudo systemctl enable --now printer-agent
+#   journalctl -u printer-agent -f
+#
+# Restart=always with a delay, and that pair is deliberate. The agent is
+# expected to die: a USB printer unplugged, a router rebooting, a kernel that
+# renamed the device. None of those need a person, and all of them are fixed by
+# starting again a few seconds later. What a person does need to see is a
+# service that restarts in a loop, which is why the delay is seconds rather
+# than milliseconds - a tight restart loop looks like "running" in every status
+# view there is.
+
+[Unit]
+Description=Print on my desk - printer agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# EDIT THESE THREE.
+User=pi
+WorkingDirectory=/home/pi/print-on-my-desk
+ExecStart=/usr/bin/python3 /home/pi/print-on-my-desk/agent/main.py
+
+Restart=always
+RestartSec=10
+
+# The log goes to the journal, which is the only place anybody will look.
+StandardOutput=journal
+StandardError=journal
+
+# It needs the USB device and nothing else. If your distribution supports it,
+# these cost nothing and remove a class of accident.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/pi/print-on-my-desk
+
+[Install]
+WantedBy=multi-user.target

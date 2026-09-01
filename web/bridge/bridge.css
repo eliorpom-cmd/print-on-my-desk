@@ -1,0 +1,36 @@
+/* The bridge page.
+ *
+ * A separate file rather than a <style> block, and that is not tidiness: the
+ * Content-Security-Policy for the static files is `style-src 'self'`, with no
+ * 'unsafe-inline'. Allowing inline styles to save one request would allow
+ * every injected one too, which is the entire thing a policy is for.
+ */
+
+  main { max-width: 40rem; }
+  h1 { font-size: 20px; margin-bottom: 0.5rem; }
+  .lead { color: var(--mute); margin: 0 0 1.5rem; }
+  .panel { border: 1px solid var(--mute); padding: 1rem; margin-bottom: 1.25rem; }
+  .panel h2 { font-family: var(--display); font-size: 13px; letter-spacing: 0.08em;
+              text-transform: uppercase; margin: 0 0 0.75rem; color: var(--mute); }
+  .buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  button { padding: 0.6rem 1rem; background: var(--ink); color: var(--paper);
+           border: 1px solid var(--ink); font-family: var(--display);
+           font-size: 13px; letter-spacing: 0.06em; cursor: pointer; }
+  button.ghost { background: none; color: var(--ink); }
+  button:disabled { opacity: 0.4; cursor: default; }
+  input[type="password"] { width: 100%; padding: 0.6rem; font: inherit;
+           background: transparent; color: var(--ink); border: 1px solid var(--ink);
+           margin-bottom: 0.6rem; }
+  .facts { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 1rem;
+           font-size: 13px; margin: 0; }
+  .facts dt { color: var(--mute); }
+  .facts dd { margin: 0; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+         background: var(--off); margin-right: 0.4rem; }
+  .dot--on { background: var(--ok); }
+  #log { list-style: none; padding: 0; margin: 0; font-size: 12px;
+         max-height: 18rem; overflow-y: auto; color: var(--mute); }
+  #log li { padding: 0.15rem 0; border-bottom: 1px solid rgba(128,128,128,0.15); }
+  #log li.bad { color: var(--warn); }
+  .warn { border-left: 3px solid var(--warn); padding-left: 0.75rem;
+          font-size: 13px; color: var(--mute); }

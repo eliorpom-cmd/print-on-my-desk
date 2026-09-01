@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bridge · Print on my desk</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/bridge/bridge.css">
+</head>
+<body>
+<main>
+  <h1>The bridge</h1>
+  <p class="lead">
+    This tab is your printer's connection to the internet. While it is open,
+    messages come out. When you close it, they wait.
+  </p>
+
+  <div class="panel">
+    <h2>1 · The printer</h2>
+    <div class="buttons">
+      <button id="connect">Connect over Bluetooth</button>
+    </div>
+    <p class="lead" style="margin:0.75rem 0 0;font-size:13px">
+      Turn the printer on first. Your browser will ask which device to use —
+      it is the one called MXW01.
+    </p>
+  </div>
+
+  <div class="panel">
+    <h2>2 · The queue</h2>
+    <label class="sr" for="token">Printer token</label>
+    <input id="token" type="password" placeholder="your PRINTER_TOKEN" autocomplete="off">
+    <div class="buttons">
+      <button id="start" disabled>Start printing</button>
+      <button id="stop" class="ghost" hidden>Stop</button>
+      <button id="forget" class="ghost">Forget the token</button>
+    </div>
+    <p class="warn" style="margin-top:0.9rem">
+      The token is kept in this browser and lets whoever has it take messages
+      out of your queue. Fine on your own computer; not fine on a shared one.
+      Use “Forget the token” when you are done.
+    </p>
+  </div>
+
+  <div class="panel">
+    <h2>3 · What is happening</h2>
+    <p style="margin:0 0 0.75rem"><span class="dot" id="dot"></span><span id="status">stopped</span></p>
+    <dl class="facts">
+      <dt>head</dt><dd id="temp">-</dd>
+      <dt>battery</dt><dd id="battery">-</dd>
+      <dt>paper</dt><dd id="paper">-</dd>
+      <dt>tickets</dt><dd id="done">0 printed, 0 failed</dd>
+      <dt>this device</dt><dd id="device">-</dd>
+    </dl>
+  </div>
+
+  <div class="panel">
+    <h2>Log</h2>
+    <ul id="log"></ul>
+  </div>
+
+  <p class="lead" style="font-size:13px">
+    No Bluetooth in this browser? Safari and every browser on iOS lack Web
+    Bluetooth. Use Chrome or Edge on a computer, or Chrome on Android — or set
+    up the always-on version, which needs no tab at all.
+  </p>
+</main>
+<script type="module" src="/bridge/bridge.js"></script>
+</body>
+</html>

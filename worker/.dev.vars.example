@@ -1,0 +1,32 @@
+# Local development only. Never commit the real .dev.vars.
+#
+# Copy this to .dev.vars and fill it in:
+#   cp .dev.vars.example .dev.vars
+#
+# For the deployed Worker these are set with `npx wrangler secret put NAME`
+# instead, one at a time. They are never in a file that git can see.
+
+# REQUIRED. Shared with whatever drives your printer: the browser bridge, the
+# Raspberry Pi agent, or the Pico. Anything holding this can take messages out
+# of your queue, so generate a real one:
+#   openssl rand -base64 32
+PRINTER_TOKEN=change-me-openssl-rand-base64-32
+
+# REQUIRED. Gets you into /admin, where you approve messages.
+ADMIN_TOKEN=change-me-too
+
+# REQUIRED. Salts the hash used for rate limiting, so the database never holds
+# anybody's address. Changing it resets everyone's daily allowance.
+IP_SALT=change-me-as-well
+
+# Optional. Signs the proof-of-work challenges. Falls back to IP_SALT.
+# ALTCHA_HMAC_KEY=
+
+# Optional. The private door: a link ending in #k=<this> opens the form while
+# the service is closed to everybody else. See docs/07-operating.md.
+# ACCESS_KEY=
+
+# Optional. Where messages waiting for your approval are announced. Leave both
+# unset and the admin page is the only place you will see them.
+# DISCORD_WEBHOOK=  (paste the whole webhook URL Discord gives you)
+# NTFY_TOPIC=some-topic-nobody-will-guess

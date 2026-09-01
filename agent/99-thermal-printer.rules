@@ -1,0 +1,26 @@
+# Let the agent talk to a USB printer without root.
+#
+#   sudo cp agent/99-thermal-printer.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload && sudo udevadm trigger
+#   # then unplug the printer and plug it back in
+#
+# WITHOUT THIS, the only symptom is a permissions error from libusb that reads
+# like a missing driver. It is not a missing driver. It is that a USB device
+# belongs to root until a rule says otherwise.
+#
+# Find your printer's ids with `lsusb`. The line looks like:
+#   Bus 001 Device 004: ID 0483:5743 STMicroelectronics ...
+#                          ^^^^ ^^^^
+#                       vendor product
+#
+# Then put them below. The wide-open version at the bottom is commented out on
+# purpose: it hands every USB device with the printer class to anybody logged
+# in, which is convenient and is not something to do without meaning to.
+
+SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="5743", MODE="0660", GROUP="plugdev"
+
+# Same printer, seen through the kernel's usblp driver rather than raw USB.
+SUBSYSTEM=="usbmisc", KERNEL=="lp[0-9]*", MODE="0660", GROUP="plugdev"
+
+# Any USB device claiming the printer class. Convenient; broader than you think.
+# SUBSYSTEM=="usb", ATTR{bDeviceClass}=="07", MODE="0660", GROUP="plugdev"

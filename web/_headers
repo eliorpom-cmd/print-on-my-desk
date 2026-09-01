@@ -1,0 +1,34 @@
+# Headers for the static files.
+#
+# These never reach the Worker: Cloudflare's asset handler answers them before
+# it runs (see "assets" in wrangler.jsonc), so worker/src/headers.js cannot
+# touch them and this file is the only place they can be set. Read the two
+# together; changing one without the other is how a policy ends up applying to
+# half a site.
+#
+# worker-src blob: is not decoration. web/pow.js builds its proof-of-work
+# worker from a Blob URL so the hashing never freezes the page. Without this
+# the Worker constructor throws, pow.js quietly falls back to solving inline,
+# and the page janks for a second on every load with nothing saying why.
+#
+# script-src is 'self' alone, with no 'unsafe-inline'. Every page here loads
+# its scripts by src. If you add analytics, relay it through your own origin
+# rather than widening this - worker/src/analytics.js shows how.
+#
+# form-action is 'self' rather than 'none' because index.html has a real
+# <form>. app.js calls preventDefault() so it never actually submits, but if
+# app.js fails to load the browser falls back to a native submit, and 'none'
+# would turn that into a button that silently does nothing rather than a page
+# that visibly reloads. The fallback should be visible.
+#
+# NOTHING HERE BLOCKS WEB BLUETOOTH. If you add a Permissions-Policy of your
+# own, leave `bluetooth` out of it, or /bridge stops being able to see your
+# printer with no error anybody can act on.
+
+/*
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; worker-src blob:; form-action 'self'; base-uri 'none'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), interest-cohort=()

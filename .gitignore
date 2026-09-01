@@ -1,0 +1,25 @@
+# Secrets, never commit
+worker/.dev.vars
+worker/.env
+agent/config.py
+firmware/config.py
+bridge/config.js
+.env
+*.local
+
+# Your own word list, once you have written one worth keeping.
+# The starter list ships; yours should not.
+# worker/src/terms.js
+
+# Node / Cloudflare
+node_modules/
+.wrangler/
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# macOS
+.DS_Store

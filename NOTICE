@@ -1,0 +1,85 @@
+Print on my desk
+Copyright (C) 2026 the Print on my desk authors
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+The full text is in LICENSE.
+
+
+WHY THE AGPL, AND WHAT IT MEANS FOR YOU
+---------------------------------------
+
+Almost everything anybody does with this is running it. You clone it, you point
+it at your own printer, your friends send you messages. Nothing in the AGPL
+asks anything of you for that. Change it, break it, rewrite half of it: it is
+yours, and nobody is owed anything.
+
+The one thing it does ask is this: if you run a MODIFIED version as a service
+that other people use over a network, they are entitled to your source. That is
+the whole point of the "Affero" part, and it is why this licence and not MIT.
+The alternative was watching somebody take a project made to be shared and turn
+it into a closed product, and there is no version of that anybody wanted.
+
+If you are not sure whether that applies to you: it almost certainly does not.
+Running it unmodified for your friends is not distribution. Running your own
+changed copy for your friends means those friends could ask for the changes -
+and if they are your friends, you will just send them.
+
+
+TRADEMARKS, WHICH THE LICENCE DOES NOT COVER
+--------------------------------------------
+
+The AGPL covers copyright. It says nothing about names.
+
+This project grew out of a service called Printomatic, which is a protected
+name and is NOT licensed here. Neither is its branding, its wordmark, or its
+visual identity. You are free to use this code to run whatever you like; you
+are not free to call it Printomatic, or to present your deployment as being
+that service.
+
+"Print on my desk" is likewise the name of this project. Fork it, change it,
+run it - and please give your own thing its own name. It is better for you
+anyway: this is a project whose whole appeal is that it is somebody's own
+printer, on somebody's own desk, and it should have somebody's own name on it.
+
+
+WHAT IS DELIBERATELY NOT HERE
+-----------------------------
+
+Two things were removed on the way out of the original repository, and both
+removals are load-bearing rather than tidiness:
+
+  * The word list (worker/src/terms.js). A published list of exactly which
+    terms a filter catches is a published list of what to type to get past it.
+    What ships is the matching ENGINE - the confusable folding, the tokenising,
+    the allowlist that keeps ordinary words out of trouble - plus a starter
+    list of a dozen entries. Write your own, and once yours is any good, keep
+    it out of your public repository too.
+
+  * The payment webhook. The queue's priority mechanism is here
+    (worker/src/supporters.js): some tickets can jump ahead of others. How a
+    ticket earns that is up to you.
+
+
+THIRD-PARTY MATERIAL
+--------------------
+
+Fonts are not committed to this repository. tools/build_font.py downloads the
+one you ask for and prints where it came from. All three presets are under the
+SIL Open Font License:
+
+  Google Sans Code   https://github.com/google/fonts/tree/main/ofl/googlesanscode
+  JetBrains Mono     https://github.com/JetBrains/JetBrainsMono
+  Courier Prime      https://github.com/quoteunquoteapps/CourierPrime
+
+The two web fonts that ARE committed - Kode Mono and Doto, in web/fonts - carry
+their OFL text alongside them in the same directory.
+
+The proof-of-work challenge format is Altcha's, reimplemented here rather than
+vendored; Altcha itself is MIT licensed.

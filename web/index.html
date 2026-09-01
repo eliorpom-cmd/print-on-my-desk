@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- ==========================================================================
+     MAKE IT YOURS
+     Everything you need to change is in this block and in style.css. Nothing
+     below the </head> knows your name.
+     ========================================================================== -->
+<title>Print on my desk</title>
+<meta name="description" content="Write a message. It comes out on a thermal printer, on real paper, on somebody's desk.">
+<meta property="og:title" content="Print on my desk">
+<meta property="og:description" content="Write a message. It comes out on a thermal printer, on real paper, on somebody's desk.">
+<meta property="og:type" content="website">
+<!-- Set this to your own address once you have deployed, or delete the three
+     og: lines: a half-filled preview looks worse than none. -->
+<!-- <meta property="og:url" content="https://YOUR-WORKER.workers.dev/"> -->
+
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/fonts/kode-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<main>
+  <header class="head">
+    <!-- Your printer's name. Two words is plenty. -->
+    <h1>PRINT ON MY DESK</h1>
+    <div class="head__side">
+      <p class="state state--loading" id="state">
+        <span class="state__mark" aria-hidden="true"></span>
+        <span id="state-text">connecting</span>
+      </p>
+      <p class="tally" id="tally" hidden><span id="tally-n">0</span> printed</p>
+      <button type="button" class="info" id="info"
+              aria-expanded="false" aria-controls="notes" aria-label="The rules">i</button>
+    </div>
+  </header>
+
+  <!-- The rules, out of the way until somebody asks for them. Say the true
+       ones: a page that promises instant paper from a printer that runs in the
+       evenings is a page that disappoints everybody once. -->
+  <div class="notes" id="notes" hidden>
+    <ul>
+      <!-- Filled from /api/status, so it can never contradict the real limit. -->
+      <li id="note-quota">One message a day per person.</li>
+      <li>Latin letters only. Anything else comes out blank.</li>
+      <li>Every message is read before it is printed.</li>
+      <li>Nothing is stored about you beyond what you type.</li>
+    </ul>
+  </div>
+
+  <p class="lede">
+    Write something. It comes out on paper, on a real printer, on a real desk.
+  </p>
+
+  <form id="form" autocomplete="off">
+    <label class="sr" for="text">Your message</label>
+    <textarea id="text" name="text" maxlength="200" rows="4"
+              placeholder="say something" required></textarea>
+
+    <div class="row">
+      <label class="sr" for="handle">Your name, if you like</label>
+      <input id="handle" name="handle" type="text" maxlength="30"
+             placeholder="your name (optional)">
+      <p class="count"><span id="count">0</span>/200</p>
+    </div>
+
+    <button type="submit" id="send">PRINT IT</button>
+  </form>
+
+  <!-- Shown when the owner closes the service. Write what you want people to
+       read when there is nothing to write. -->
+  <section class="over" id="over" hidden>
+    <h2>That is the end of it, for now.</h2>
+    <p>Thank you for taking part. Nothing new is being taken; what is already
+       in the queue is still coming out.</p>
+    <p>
+      <a id="over-site" href="https://github.com/YOUR-ACCOUNT/print-on-my-desk">Build your own</a>
+      <!-- A second link, if you have somewhere to send people. -->
+      <a id="over-threads" href="#" hidden>Elsewhere</a>
+    </p>
+  </section>
+</main>
+
+<!-- The white-out and the paper. Do not rename these ids: app.js drives them. -->
+<div class="print" id="print" hidden>
+  <div class="print__slot" aria-hidden="true"></div>
+  <div class="print__strip" id="strip">
+    <canvas id="canvas" width="384" height="10"></canvas>
+  </div>
+  <p class="print__note" id="print-note"></p>
+  <button type="button" class="print__close" id="print-close">write another</button>
+</div>
+
+<!-- An optional invitation, shown at most once a day. Unhide it and fill it in
+     if you have something to invite people to; leave it as it is otherwise. -->
+<aside class="sheet" id="sheet" hidden>
+  <h2 id="sheet-title">One more thing</h2>
+  <p id="sheet-body"></p>
+  <a id="sheet-cta" href="#">Have a look</a>
+  <button type="button" id="sheet-close">no thanks</button>
+</aside>
+
+<div id="paper" hidden></div>
+
+<script type="module" src="/app.js"></script>
+</body>
+</html>
