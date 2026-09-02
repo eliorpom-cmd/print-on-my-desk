@@ -187,6 +187,13 @@ export async function loadDesk(db, settings, now = Date.now()) {
     device: device ?? null,
     settings: { ...settings, season_closed: seasonClosed ? "1" : "0" },
     pending_ttl_h: num(settings, "pending_ttl_h", 2),
+    // The profile ids the desk may offer, sent rather than hardcoded in the
+    // page. profiles.js is the one list of machines this project knows about,
+    // and CONTRIBUTING invites people to add to it: a second copy in the admin
+    // page would go stale the first time somebody did, and go stale silently,
+    // because a select that is missing an option looks exactly like a select.
+    // Costs no database read - PROFILES is a module constant.
+    profiles: Object.keys(PROFILES),
   };
 }
 

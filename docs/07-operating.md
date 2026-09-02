@@ -59,6 +59,14 @@ actually hold, and the gauge estimates the rest.
 Measure it once rather than trusting a listing. Set it to 0 and the gauge says
 nothing at all, which is the only reading that cannot be wrong.
 
+**And tell it which printer it is measuring.** `printer_profile` on `/admin` —
+`mxw01` for the 58 mm Bluetooth one this project ships pointed at, `trp100` for
+an 80 mm receipt printer. It is the number the gauge divides by: 8 dots per
+millimetre against 7.0866, which is 13% of your roll. It changes nothing on the
+wire — a printer is always served the profile it asks for, because it is the
+only party that knows what it is plugged into — so getting it wrong costs you
+an inaccurate gauge and nothing else.
+
 ## 4 · What it costs, and the one way to break that
 
 Nothing, on Cloudflare's free plan, with room to spare. The number that matters

@@ -19,7 +19,7 @@ const DEFAULTS = {
   // nothing on the wire: a device is served the profile it ASKS for, in its
   // /api/machine/next query, because it is the only party that knows what it
   // is actually plugged into. See profiles.js.
-  printer_profile: "trp100",
+  printer_profile: "mxw01",
   // "Thank-yous only". The queue goes on filling and being moderated; the
   // printer stays quiet for everything except somebody who paid on a tip jar.
   //

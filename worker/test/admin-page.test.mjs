@@ -255,3 +255,46 @@ test("the desk stops reloading while the tab is hidden", () => {
   const start = src.match(/function startDeskPolling\(\)[\s\S]{0,220}?\}/)[0];
   assert.match(start, /if \(deskTimer !== null\) return;/, "two timers would double the load");
 });
+
+// --- the printer in service -----------------------------------------------
+//
+// printer_profile shipped as a setting the API accepted, the paper gauge read,
+// and the desk could not touch: no control here, no line in any document. A
+// deployment whose printer was not the shipped default divided its roll by the
+// wrong dot pitch - 7.0866 against 8, which is 13% - and had nowhere to say so.
+//
+// What these guard is the wiring, because it is the half that fails silently:
+// a select whose options never arrived looks exactly like a select.
+
+test("the printer in service is a select, built from the profiles the Worker sent", async () => {
+  const { document } = await loadedDesk({
+    ...DESK,
+    settings: { ...DESK.settings, printer_profile: "trp100" },
+    profiles: ["mxw01", "trp100"],
+  });
+
+  const select = document.querySelector('#settings select[data-key="printer_profile"]');
+  assert.ok(select, "printer_profile renders a control");
+  assert.equal(select.tagName.toLowerCase(), "select", "an enum is not a number box");
+
+  const ids = Array.from(select.querySelectorAll("option")).map((o) => o.value);
+  assert.deepEqual(ids, ["mxw01", "trp100"], "every profile the Worker knows is offered");
+
+  const chosen = Array.from(select.querySelectorAll("option")).filter((o) => o.selected);
+  assert.deepEqual(chosen.map((o) => o.value), ["trp100"], "the current setting is the selected one");
+});
+
+test("a Worker that sends no profile list leaves an empty select rather than throwing", async () => {
+  // Older deployment, newer page: the queue answer has no `profiles` key. The
+  // desk must still render - every other setting on this page is behind the
+  // same loop, and one throw takes all of them out.
+  const { document, errors } = await loadedDesk({
+    ...DESK,
+    settings: { ...DESK.settings, printer_profile: "mxw01" },
+  });
+
+  assert.deepEqual(errors.map((e) => e.message), [], "no error while running the page");
+  const select = document.querySelector('#settings select[data-key="printer_profile"]');
+  assert.ok(select, "the control is still there");
+  assert.equal(select.querySelectorAll("option").length, 0, "with nothing to offer");
+});

@@ -301,6 +301,7 @@ export const ADMIN_PAGE = String.raw`<!doctype html>
     only_supporters: "priority tickets ONLY (nothing else prints)",
     feed_lines_mxw01: "Tear-off feed (58 mm, paused)",
     feed_lines_trp100: "Tear-off feed (80 mm)",
+    printer_profile: "Printer in service",
     moderation: "AI moderation",
     // Last, and on its own, because it is the only one here that ends the
     // season rather than tuning it.
@@ -316,18 +317,43 @@ export const ADMIN_PAGE = String.raw`<!doctype html>
   // problem and nobody had said so.
   var FLAGS = { hold_all: 1, moderation: 1, only_supporters: 1, season_closed: 1 };
 
+  // Settings that are one of a fixed set rather than a number or a switch.
+  //
+  // Only printer_profile so far, and it needed this because it had no control
+  // at all: it was in the API's schema, absent from this page, and named in no
+  // document. Which machine is in service decides what the paper gauge divides
+  // by - 8 dots per millimetre against 7.0866 - so a deployment whose printer
+  // is not the shipped default read its roll 13% out with no way to say so
+  // short of hand-rolling an API call.
+  //
+  // The options are not listed here. They arrive with the queue, from
+  // profiles.js, so adding a printer stays a one-file change.
+  var ENUMS = { printer_profile: 1 };
+  var enumOptions = {};
+
   function renderSettings(settings) {
     var box = $("settings");
     box.textContent = "";
     Object.keys(SETTING_LABELS).forEach(function (key) {
       box.appendChild(el("label", null, SETTING_LABELS[key]));
-      var input = el("input");
-      if (FLAGS[key]) {
-        input.type = "checkbox";
-        input.checked = settings[key] === "1";
+      var input;
+      if (ENUMS[key]) {
+        input = el("select");
+        (enumOptions[key] || []).forEach(function (id) {
+          var option = el("option", null, id);
+          option.value = id;
+          if (settings[key] === id) option.selected = true;
+          input.appendChild(option);
+        });
       } else {
-        input.type = "number";
-        input.value = settings[key];
+        input = el("input");
+        if (FLAGS[key]) {
+          input.type = "checkbox";
+          input.checked = settings[key] === "1";
+        } else {
+          input.type = "number";
+          input.value = settings[key];
+        }
       }
       input.dataset.key = key;
       input.addEventListener("change", function () {
@@ -651,6 +677,7 @@ export const ADMIN_PAGE = String.raw`<!doctype html>
         $("stuck").textContent = stuck
           ? stuck + " ticket" + (stuck > 1 ? "s" : "") + " n'imprimera pas. Reprint le remet en file."
           : "";
+        enumOptions.printer_profile = data.profiles || [];
         renderSettings(data.settings);
       })
       .catch(function (err) {
