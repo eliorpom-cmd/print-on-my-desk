@@ -82,6 +82,28 @@ class Api:
                 self.last_poll_after = _seconds(response.headers.get("x-poll-after"))
         except urllib.error.HTTPError as err:
             # An HTTP error is an answer, and some of them are meaningful.
+            #
+            # 401 most of all, and it used to arrive here as "GET
+            # /api/machine/next?device=pi&profile=mxw01: HTTP 401" - a line
+            # whose only clue is a number, logged under the event name
+            # `poll_failed`, which docs/02 reads as "the Worker's address is
+            # wrong, or DNS is". So the one mistake almost everybody makes on
+            # a first install - a PRINTER_TOKEN that does not match the one in
+            # `wrangler secret put` - sent people to debug their network.
+            #
+            # firmware/net.py has said "token refused by the Worker" since it
+            # was written. The Pi agent simply never learned it. Same words on
+            # purpose: somebody searching the logs of either end should find
+            # the same sentence.
+            #
+            # Still a NetworkError, so the loop backs off rather than
+            # hammering a door that will not open until a person changes
+            # something. What changes is only what the person reads.
+            if err.code == 401:
+                raise NetworkError(
+                    "the token was refused: PRINTER_TOKEN here does not match the "
+                    "Worker's (%s %s)" % (method, path)
+                )
             raise NetworkError("%s %s: HTTP %d" % (method, path, err.code))
         except (urllib.error.URLError, socket.timeout, OSError) as err:
             raise NetworkError("%s %s: %s" % (method, path, err))

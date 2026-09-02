@@ -478,5 +478,56 @@ agent, api, printer = build(api=FakeApi())
 api.answers_instantly(poll_after=0.0)
 check("and a missing header still leaves a second between tries", agent.cycle() == 1.0)
 
+# --- what a refused token looks like in the journal ------------------------
+#
+# The one mistake almost everybody makes on a first install is a PRINTER_TOKEN
+# that does not match the Worker's, and until now it reached the journal as
+# "...: HTTP 401" under the event name `poll_failed` - which docs/02 reads as a
+# wrong address or bad DNS. Somebody would have spent an evening on their
+# router. The Pico has said "token refused" since it was written; this is the
+# Pi agent catching up, and the assertion is on the words because the words are
+# the entire fix.
+
+print("\na token the Worker will not take")
+
+import urllib.error
+import net as agent_net
+
+
+class _RefusingOpener:
+    """Stands in for urlopen and answers every request with a 401."""
+
+    def __init__(self, code):
+        self.code = code
+
+    def __call__(self, request, timeout=None):
+        raise urllib.error.HTTPError(
+            request.full_url, self.code, "Unauthorized", {}, None
+        )
+
+
+def _error_from(code):
+    api = agent_net.Api("https://example.invalid", "wrong-token", "pi", "mxw01")
+    saved = agent_net.urllib.request.urlopen
+    agent_net.urllib.request.urlopen = _RefusingOpener(code)
+    try:
+        api.next_job()
+    except agent_net.NetworkError as err:
+        return str(err)
+    finally:
+        agent_net.urllib.request.urlopen = saved
+    return ""
+
+
+message = _error_from(401)
+check("says the token was refused, in words", "the token was refused" in message)
+check("and names the setting to go and look at", "PRINTER_TOKEN" in message)
+
+# The special case must stay special. Every other HTTP answer keeps the plain
+# shape, or a 500 starts telling people to check their token.
+other = _error_from(500)
+check("a 500 is still reported as a 500", "HTTP 500" in other)
+check("and does not mention the token", "the token was refused" not in other)
+
 print("\n%d ok, %d failed" % (PASS, FAIL))
 sys.exit(1 if FAIL else 0)

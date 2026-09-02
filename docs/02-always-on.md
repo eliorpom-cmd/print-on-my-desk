@@ -154,8 +154,13 @@ journalctl -u printer-agent -n 50
 | `No backend available` | libusb is not installed |
 | `Access denied` / `Operation not permitted` | the udev rule, step 3 |
 | `the token was refused` | `PRINTER_TOKEN` differs from the Worker's |
-| `no printer found` | check the cable, then `lsusb` |
-| `poll_failed` repeatedly | the Worker's address is wrong, or DNS is |
+| `no USB printer-class device on the bus` | check the cable, then `lsusb` |
+| `poll_failed` with `HTTP 404` or a DNS error | the Worker's address is wrong |
+| `poll_failed` with nothing else in it | the Pi is off the network |
+
+Every one of those arrives inside a `poll_failed` line, so read the `error`
+field rather than the event name — the event name is the same for a wrong
+address, a refused token and an unplugged router.
 
 More in [08-troubleshooting](08-troubleshooting.md).
 
