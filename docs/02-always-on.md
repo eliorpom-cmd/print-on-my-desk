@@ -47,7 +47,7 @@ ssh pi@raspberrypi.local
 ## 3 · Install
 
 ```sh
-git clone https://github.com/YOUR-ACCOUNT/print-on-my-desk.git
+git clone https://github.com/eliorpom-cmd/print-on-my-desk.git
 cd print-on-my-desk
 bash agent/install.sh
 ```

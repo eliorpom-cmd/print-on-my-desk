@@ -210,6 +210,12 @@ function composeSupporter(canvas, text, profile, { id, createdAt, supporter }) {
   const BAND = 14; // ~2 mm of solid black
   let y = profile.topPad;
 
+  // One band, not three. Three was an attempt to make the ticket AUDIBLE,
+  // after the printer turned out to have no buzzer a command can reach. It
+  // worked and it was ugly, and it was solving the wrong problem: the alert
+  // belongs on a phone, not on the paper. A notification goes out the moment a
+  // priority ticket is created, which arrives before the ticket does and works
+  // from anywhere.
   y = canvas.rule(y, BAND, 0) + LAYOUT.ruleGap;
 
   // The name at double size. drawGlyph scales by whole numbers only, so this

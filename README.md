@@ -7,6 +7,12 @@ seconds later.
 It is not a product and it is not meant to scale. It is meant to be **yours**:
 one printer, one link, and the people you send that link to.
 
+<!-- A picture goes here, and it is the most useful thing this file could gain.
+     See docs/images/README.md for what to take. Uncomment when you have one:
+
+![A ticket, printed](docs/images/ticket.jpg)
+-->
+
 ---
 
 ## What you are building
@@ -134,6 +140,12 @@ everything held for your approval. If you point this at a wider audience, read
 | [AGENTS.md](AGENTS.md) | For a coding assistant doing this with you |
 
 ---
+
+## Security
+
+A public form that causes a physical event in somebody's home. What stands
+between a stranger and your paper, what the trust boundaries are, and what the
+known limitations honestly are: [SECURITY.md](SECURITY.md).
 
 ## Licence
 

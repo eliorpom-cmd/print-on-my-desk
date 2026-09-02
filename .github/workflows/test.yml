@@ -1,0 +1,74 @@
+# The three suites, on every push and every pull request.
+#
+# All three run WITHOUT HARDWARE, which is the property that makes this worth
+# having: a contributor with no printer can still know whether they broke
+# something, and a maintainer can read a pull request without plugging anything
+# in.
+#
+# What is deliberately NOT here: a deploy step. Publishing to somebody's
+# Cloudflare account from CI needs an API token in the repository's secrets,
+# and a token that can deploy is a token that can read the database. A project
+# people are meant to fork should not teach that as the default.
+
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  worker:
+    name: worker (node)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: worker/package-lock.json
+      - run: npm ci
+        working-directory: worker
+      - run: npm test
+        working-directory: worker
+
+  python:
+    name: agent and firmware (python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # No pip install, and that is on purpose. The agent's only dependency is
+      # pyusb, and escpos_printer.py imports it inside a try/except precisely
+      # so that the tests - which never touch USB - run on a machine that has
+      # never seen a printer. If this step ever needs a package, something has
+      # started reaching for hardware in a unit test.
+      - name: agent
+        working-directory: agent
+        run: |
+          python3 test_loop.py
+          python3 test_escpos_printer.py
+
+      - name: firmware
+        working-directory: firmware
+        run: |
+          python3 test_loop.py
+          python3 test_ble_printer.py
+
+  preview:
+    name: the preview matches the renderer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # web/lib is a copy of the Worker's own renderer, so that what the page
+      # draws is what the print head lays down. A copy that has drifted is a
+      # preview that lies, and it drifts silently: both sides go on working.
+      - run: node tools/sync_web.mjs --check

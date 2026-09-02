@@ -21,11 +21,10 @@ your computer, messages print. When you close it, they queue up and wait.
 
 ## 1 · Get the code
 
-Use the green **Code** button at the top of this repository, or the terminal —
-replacing `YOUR-ACCOUNT` with whoever you are looking at this on:
+Use the green **Code** button at the top of this repository, or the terminal:
 
 ```sh
-git clone https://github.com/YOUR-ACCOUNT/print-on-my-desk.git
+git clone https://github.com/eliorpom-cmd/print-on-my-desk.git
 cd print-on-my-desk/worker
 npm install
 ```
