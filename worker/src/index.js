@@ -73,6 +73,9 @@ import {
   paperUsed,
   decideMany,
   decideAllPending,
+  budgetedBatch,
+  spendBudget,
+  readBudget,
 } from "./admin.js";
 import { ADMIN_PAGE } from "./admin-page.js";
 import { NOT_FOUND_PAGE } from "./not-found.js";
@@ -173,9 +176,13 @@ const nothingFor = (deviceId, pollAfter) => {
  * mode stayed on, which with four thousand queued messages is indefinitely.
  * The bug would look like "the agent is very busy doing nothing".
  */
-async function anythingApproved(db, onlySupporters = false) {
+export async function anythingApproved(db, onlySupporters = false) {
+  // CROSS JOIN for the same reason the claim uses one, and it matters more
+  // here: this runs once a second for the whole length of a long poll, so the
+  // join order SQLite guesses is multiplied by twenty-five before the device
+  // has even been answered. See PICK_SUPPORTER in jobs.js.
   const sql = onlySupporters
-    ? `SELECT 1 AS ok FROM jobs j JOIN supporters s ON s.job_id = j.id
+    ? `SELECT 1 AS ok FROM supporters s CROSS JOIN jobs j ON j.id = s.job_id
         WHERE j.status = 'approved' LIMIT 1`
     : "SELECT 1 AS ok FROM jobs WHERE status = 'approved' LIMIT 1";
   return Boolean(await db.prepare(sql).first());
@@ -231,6 +238,11 @@ async function handleNext(request, env, url) {
   // a device that gives up mid-wait leaves no job marked as handed out.
   const onlySupporters = settings.only_supporters === "1";
 
+  // "Print a thousand of them and stop." Zero while idle as well as when no
+  // budget is set: idle already prints nothing but thank-yous, and a thank-you
+  // must not spend a budget that has been paused or has already run out.
+  let budget = onlySupporters ? 0 : Math.max(num(settings, "print_budget", 0), 0);
+
   const waitS = Math.min(Math.max(Number(url.searchParams.get("wait")) || 0, 0), LONG_POLL_MAX_S);
   if (waitS > 0) {
     const until = Date.now() + waitS * 1000;
@@ -238,11 +250,28 @@ async function handleNext(request, env, url) {
       if (Date.now() >= until) return nothingFor(deviceId, pollWhenEmpty);
       await sleep(LONG_POLL_TICK_MS);
     }
+    // The wait was up to 25 seconds long, and settings were read before it.
+    // With two devices on the wire the other one can have finished the run in
+    // the meantime, and claiming on the stale figure would hand out one strip
+    // past the end. One row, and only while a run is actually going.
+    if (budget > 0) {
+      budget = await readBudget(env.DB);
+      // Zero here is "the run ended while we waited", never "no budget": this
+      // branch is only reached when there was one. The mode is already back to
+      // idle and this request is the only thing that has not heard. Answering
+      // 204 rather than falling through matters - falling through would read
+      // the 0 as "no limit" and hand out the rest of the queue.
+      if (!budget) return nothingFor(deviceId, pollWhenEmpty);
+    }
   }
 
-  if (batchSize > 1) {
+  // The last strip is short by exactly as much as the budget is, so the run
+  // ends on the number asked for rather than on a batch boundary.
+  const tickets = budgetedBatch(batchSize, budget);
+
+  if (tickets > 1) {
     return await handleNextBatch(
-      env, deviceId, settings, batchSize, pollWhenEmpty, profile, onlySupporters
+      env, deviceId, settings, tickets, pollWhenEmpty, profile, onlySupporters, budget
     );
   }
 
@@ -268,6 +297,11 @@ async function handleNext(request, env, url) {
     console.log(JSON.stringify({ event: "render_failed", id: job.id, error: err.message }));
     return nothingFor(deviceId, pollWhenEmpty);
   }
+
+  // After the render, so a ticket that could never have printed does not cost
+  // one. Awaited rather than deferred: the next poll is a second away and must
+  // see the new figure, or a budget of one hands out two.
+  if (budget > 0) await spendBudget(env.DB, 1);
 
   console.log(
     JSON.stringify({ event: "claimed", id: job.id, device: deviceId, lines: payload.lines })
@@ -295,7 +329,7 @@ const MAX_BATCH = 12;
 const MAX_BULK = 500;
 
 async function handleNextBatch(
-  env, deviceId, settings, batchSize, pollWhenEmpty, profile, onlySupporters = false
+  env, deviceId, settings, batchSize, pollWhenEmpty, profile, onlySupporters = false, budget = 0
 ) {
   const jobs = await claimBatch(env.DB, deviceId, batchSize, Date.now(), onlySupporters);
   if (!jobs.length) return nothingFor(deviceId, pollWhenEmpty);
@@ -327,6 +361,11 @@ async function handleNextBatch(
   // only way to know how much is left before that happens - it ran out twice
   // on 30 August, the second time with nobody in the flat.
   await rememberHeights(env.DB, built);
+
+  // The tickets on the strip, not the tickets claimed: buildBatchPayload hands
+  // back whatever did not fit under max_batch_lines, and released paper was
+  // never going to be printed.
+  if (budget > 0) await spendBudget(env.DB, built.payload.ids.length);
 
   console.log(
     JSON.stringify({

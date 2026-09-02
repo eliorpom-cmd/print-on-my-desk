@@ -7,6 +7,7 @@
 // rejected after two hours.
 
 import { num } from "./settings.js";
+import { record } from "./events.js";
 import { profileFor, PROFILES } from "./profiles.js";
 import { bumpCounter, counterOrCount, PENDING, PRINTED, QUEUED } from "./counters.js";
 
@@ -42,6 +43,10 @@ const EDITABLE = {
   // the tens of metres, and the number has to be measurable rather than
   // plausible - see settings.js.
   roll_length_m:   { type: "int", min: 0, max: 500 },
+  // Tickets left to print before the queue puts itself back to idle. 0 is no
+  // bound, and the ceiling is queue_max's, because a budget larger than the
+  // queue it draws from would only ever be a typo.
+  print_budget:    { type: "int", min: 0, max: 5000 },
   // Bounded well under the 52 C the machine has been seen to survive, and
   // never below room temperature, where it would never resume at all.
   head_max_c:      { type: "int", min: 30, max: 45 },
@@ -452,6 +457,81 @@ export async function paperUsed(db, settings) {
     rollMm,
     leftMm: rollMm ? Math.max(Math.round(rollMm - mm), 0) : null,
   };
+}
+
+/**
+ * How many tickets one hand-out may carry, once the budget has its say.
+ *
+ * The whole reason the budget cannot simply be checked and then ignored: a
+ * strip carries up to eight tickets, so a budget of 1,000 spent eight at a
+ * time ends at 1,000 only by luck. Capping the last strip is what makes the
+ * number on the roll the number that was asked for.
+ *
+ * A budget of 0 is "no budget" rather than "no tickets", which is why it
+ * returns the batch size unchanged - see print_budget in settings.js.
+ */
+export function budgetedBatch(batchSize, budget) {
+  if (!(budget > 0)) return batchSize;
+  return Math.max(Math.min(batchSize, Math.floor(budget)), 1);
+}
+
+/**
+ * The budget as it stands right now, in one row's worth of reading.
+ *
+ * loadSettings already carries it, and this exists for the one place that
+ * cannot trust what it carries: a long poll holds the connection open for up
+ * to 25 seconds, and a second device can finish the run inside that window.
+ * Claiming on the figure from before the wait would overshoot by a strip.
+ */
+export async function readBudget(db) {
+  const row = await db.prepare("SELECT value FROM settings WHERE key = 'print_budget'").first();
+  return Math.max(Number(row?.value) || 0, 0);
+}
+
+/**
+ * Charges tickets to the print budget, and puts the queue back to idle when it
+ * runs out.
+ *
+ * Two things it must get right, both of them about the moment it hits zero:
+ *
+ *   * the decrement is one statement, not a read and a write. Two devices
+ *     polling the same second would otherwise both read 4, both write 3, and
+ *     the run would overshoot by however many devices are on the wire. There
+ *     is one Pi today; the SQL costs nothing and does not care.
+ *   * the `> 0` in the WHERE clause is what stops the budget going negative
+ *     and, more importantly, what makes the flip to idle happen exactly once.
+ *     priority tickets go on printing after it, and they must not re-trigger it.
+ *
+ * Returns the tickets left, or null when no budget was running.
+ */
+export async function spendBudget(db, tickets, now = Date.now()) {
+  const spend = Math.max(Math.floor(Number(tickets) || 0), 0);
+  if (!spend) return null;
+  const row = await db
+    .prepare(
+      // The inner CAST to INTEGER is not redundant. The tickets arrive as a
+      // JS number, which SQLite takes as a float, so the subtraction returns a
+      // real and the row is written as "992.0" and eventually "0.0". Number()
+      // reads both correctly, which is why the unit tests were happy and a
+      // local run was not: the shell compares the stored text against "0", and
+      // "0.0" is not "0" - it read as a run still going with nothing left.
+      `UPDATE settings
+          SET value = CAST(CAST(MAX(CAST(value AS INTEGER) - ?, 0) AS INTEGER) AS TEXT),
+              updated_at = ?
+        WHERE key = 'print_budget' AND CAST(value AS INTEGER) > 0
+      RETURNING value`
+    )
+    .bind(spend, now)
+    .first();
+  if (!row) return null;
+  const left = Number(row.value) || 0;
+  if (left > 0) return left;
+  // Idle rather than paused: the form stays open, the queue keeps filling and
+  // being moderated, and somebody who pays still gets their ticket. Only the
+  // backlog stops coming out, which is the whole of what was asked for.
+  await saveSetting(db, "only_supporters", "1", now);
+  await record(db, "note", { detail: "print budget spent - back to idle" }, now);
+  return 0;
 }
 
 /**

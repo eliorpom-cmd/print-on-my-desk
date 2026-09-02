@@ -446,8 +446,20 @@ test("supporters jump the queue, whatever the mode", () => {
   // Not a nicety. A priority ticket that arrives behind four thousand queued
   // messages is not a thank-you, and the person who paid is most likely
   // watching the queue counter while it does not move.
+  //
+  // This used to assert `ORDER BY (s.job_id IS NOT NULL) DESC`, which is how
+  // the priority was written until 1 September. The rewrite deleted that line
+  // from the code and quoted it in the comment explaining why - so the test
+  // went on passing, against prose. It asserted nothing for a day.
+  //
+  // What carries the priority now is the order of the two picks: the paid one
+  // is tried first, and the queue is only reached if it comes back empty.
   const sql = readFileSync(new URL("../src/jobs.js", import.meta.url), "utf8");
-  assert.match(sql, /ORDER BY \(s\.job_id IS NOT NULL\) DESC/);
+  const body = sql.slice(sql.indexOf("export async function claimJob"));
+  assert.ok(
+    body.indexOf("PICK_SUPPORTER") < body.indexOf("PICK_OLDEST"),
+    "the paid pick has to be the one that runs first"
+  );
 });
 
 test("only_supporters is off by default, and is a flag", () => {
@@ -464,5 +476,9 @@ test("the long poll asks the same question the claim will answer", () => {
   // that is forever. It would look like "the agent is very busy doing nothing".
   const index = readFileSync(new URL("../src/index.js", import.meta.url), "utf8");
   assert.match(index, /anythingApproved\(env\.DB, onlySupporters\)/);
-  assert.match(index, /JOIN supporters s ON s\.job_id = j\.id/);
+  // CROSS JOIN, not JOIN: the order is the fix of 2 September, and asserting
+  // the loose shape here is what let the expensive one through. See
+  // d1-cost.test.mjs, "the guard would have caught the queries that caused the
+  // second day".
+  assert.match(index, /FROM supporters s CROSS JOIN jobs j ON j\.id = s\.job_id/);
 });

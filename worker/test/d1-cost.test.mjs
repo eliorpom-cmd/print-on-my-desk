@@ -28,6 +28,7 @@ import assert from "node:assert/strict";
 import { makeDb } from "./helpers/d1.mjs";
 import { claimJob, claimBatch, completeJob, completeBatch, sweepStaleLeases } from "../src/jobs.js";
 import { decideMany, reprint, requeueFailed } from "../src/admin.js";
+import { anythingApproved } from "../src/index.js";
 import { expirePending } from "../src/moderation.js";
 import {
   bumpCounter,
@@ -99,6 +100,34 @@ function assertCheap(plan, what) {
       `${what} may sort only what is bounded, and a jobs index is not:\n${plan}`
     );
   }
+  // Where supporters are involved, jobs must be reached one rowid at a time.
+  //
+  // This is the rule the file was missing on 2 September, and its absence cost
+  // a second day's quota. Both statements read `FROM supporters ... JOIN jobs`
+  // - written to cost twelve rows, one per payment - and SQLite planned both
+  // the other way round, because a plain JOIN is not a request about order and
+  // an unanalysed database has nothing to work it out from. Jobs went on the
+  // outside, sought by status, with a probe into supporters per approved row.
+  //
+  // Nothing above catches that. There is no bare `SCAN jobs` - it reads
+  // `SEARCH j USING COVERING INDEX idx_jobs_printed (status=?)`, which is a
+  // walk of every approved row wearing the word SEARCH - and no sort for the
+  // rule above to bite on.
+  //
+  // So state the promise the claim actually makes: supporters is the outer
+  // loop and jobs is entered by primary key. A jobs access by any index but
+  // the rowid, in a plan that mentions supporters, is the queue being read to
+  // answer a question about twelve rows.
+  if (/supporters/.test(plan)) {
+    const reads = plan.split("\n").filter((l) => /\b(SCAN|SEARCH)\b/.test(l));
+    for (const line of reads.filter((l) => /\b(jobs|j)\b/.test(l) && !/supporters/.test(l))) {
+      assert.match(
+        line,
+        /INTEGER PRIMARY KEY/,
+        `${what} must reach jobs by rowid where supporters are involved:\n${plan}`
+      );
+    }
+  }
 }
 
 /** A queue long enough that a scan and a seek cannot be confused. */
@@ -118,6 +147,22 @@ function longQueue(db, n = 5000, supporters = 3) {
      VALUES (?, ?, 'Donation', 0)`
   );
   for (let i = 0; i < supporters; i++) insert.run(`seed-${i}`, n + 1 + i);
+  // No ANALYZE, on purpose, and it used to be here.
+  //
+  // With statistics SQLite works out for itself that `supporters` is the small
+  // table and drives the join off it. Production has no statistics - D1 runs
+  // no ANALYZE, and `sqlite_stat1` does not exist in this database - so with
+  // that one line the file measured a planner that knew something the real one
+  // does not, and passed the two queries that spent 2 September's quota.
+  //
+  // The plans asserted here are now the plans production runs. `stats()` below
+  // checks the other state as well, because a database that gains statistics
+  // later must not quietly change shape either.
+  return db;
+}
+
+/** The same queue, with the statistics production does not have. */
+function analysed(db) {
   db.raw.exec("ANALYZE");
   return db;
 }
@@ -189,6 +234,68 @@ test("the guard would have caught the query that caused all this", async () => {
     /may sort only what is bounded/,
     "the guard has to refuse it, or it guards nothing"
   );
+});
+
+test("the guard would have caught the queries that caused the second day", async () => {
+  // 2 September, and the same lesson twice. The claim of 1 September was
+  // rewritten to drive off `supporters` - twelve rows, not five thousand - and
+  // the rewrite is right. What was not checked is that SQLite agreed.
+  //
+  // A plain JOIN is an unordered request. With no statistics the planner put
+  // `jobs` on the outside and sought into `supporters` once per approved row,
+  // so the statement written to read twelve rows read 3,585, and the long
+  // poll's probe - the same shape, run once a second for twenty-five seconds -
+  // read 4.6 million in an afternoon. Every rule above passed it: no bare
+  // SCAN, and no sort to catch.
+  //
+  // Both queries, exactly as deployed, kept here so the new rule can be held
+  // against the things it was written for.
+  const PROBE = `SELECT 1 AS ok FROM jobs j JOIN supporters s ON s.job_id = j.id
+                  WHERE j.status = 'approved' LIMIT 1`;
+  const PICK = `SELECT j.id FROM supporters s
+                  JOIN jobs j ON j.id = s.job_id
+                 WHERE j.status = 'approved'
+                 ORDER BY j.created_at ASC, j.id ASC LIMIT 1`;
+
+  const db = longQueue(makeDb());
+  for (const [what, sql] of [["the probe", PROBE], ["the paid pick", PICK]]) {
+    const plan = planOf(db.raw, sql);
+    assert.doesNotMatch(plan, /SCAN (jobs|j)\b(?! USING)/, `${what} did not scan, it sought`);
+    assert.throws(
+      () => assertCheap(plan, what),
+      /must reach jobs by rowid/,
+      `${what} has to be refused, or the rule guards nothing`
+    );
+  }
+});
+
+test("the paid pick drives off supporters, with statistics and without", async () => {
+  // The join order must be a property of the statement, not of what the
+  // planner happens to know. Production has no `sqlite_stat1`; a database
+  // restored from a dump, or analysed by hand one day, has one. Same plan.
+  for (const db of [longQueue(makeDb()), analysed(longQueue(makeDb()))]) {
+    const spy = spyOn(db);
+    await claimJob(spy.db, DEV, Date.now(), true);
+    await anythingApproved(spy.db, true);
+    assert.ok(spy.seen.length >= 2, "both statements must have run");
+    for (const sql of spy.seen) {
+      assertCheap(planOf(db.raw, sql), "the paid pick");
+    }
+  }
+});
+
+test("the long poll's probe costs the supporters table, not the queue", async () => {
+  // The probe is the expensive one even though the claim looks worse, because
+  // of how often it runs: the long poll asks this question once a second for
+  // as long as it waits, and in thank-yous-only mode the answer is no every
+  // time. An answer of "no" has to be the cheapest thing in the file.
+  const db = longQueue(makeDb());
+  const spy = spyOn(db);
+
+  assert.equal(await anythingApproved(spy.db, true), false, "nothing paid for is waiting");
+  assert.equal(await anythingApproved(spy.db, false), true, "but the queue is not empty");
+
+  for (const sql of spy.seen) assertCheap(planOf(db.raw, sql), "the long poll probe");
 });
 
 test("thank-yous-only hands out nothing else, and does not spin", async () => {

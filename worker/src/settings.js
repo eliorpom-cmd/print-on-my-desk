@@ -85,6 +85,24 @@ const DEFAULTS = {
   // says nothing at all until somebody has run one roll out and written down
   // what it did. Saying nothing is the only reading that cannot be wrong.
   roll_length_m: "0",
+  // "Print a thousand of them and stop." Tickets left to hand out before the
+  // queue puts itself back to only_supporters, "0" meaning no bound at all.
+  //
+  // It exists because there was no way to spend a roll on purpose. The queue
+  // has two speeds - idle, where only a tip jar prints, and live, where the whole
+  // approved backlog comes out one after another until somebody is there to
+  // stop it - and a fresh roll deserves a middle one: run this much of the
+  // backlog off, then go quiet without anyone watching the machine.
+  //
+  // Counted on the CLAIM rather than on the print, and that direction is
+  // deliberate. A strip that is handed out and then fails has still cost its
+  // budget; the error is a ticket or two short of the number asked for, which
+  // is the side to be wrong on when the alternative is a device that never
+  // reports back and prints the rest of the queue.
+  //
+  // priority tickets do not draw on it: once it is spent the mode is idle, and
+  // idle is exactly the mode where somebody who paid still gets their ticket.
+  print_budget: "0",
   // Print-head thermostat, served to the Pico in every heartbeat so it can be
   // tuned without reflashing the board.
   //

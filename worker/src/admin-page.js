@@ -299,6 +299,7 @@ export const ADMIN_PAGE = String.raw`<!doctype html>
     dedupe_window_h: "Duplicate window, hours",
     intensity: "Print intensity (max 192)",
     only_supporters: "priority tickets ONLY (nothing else prints)",
+    print_budget: "Tickets left to print, then idle (0 = no limit)",
     feed_lines_mxw01: "Tear-off feed (58 mm, paused)",
     feed_lines_trp100: "Tear-off feed (80 mm)",
     printer_profile: "Printer in service",

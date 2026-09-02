@@ -83,8 +83,16 @@ export async function sweepStaleLeases(db, now = Date.now()) {
  */
 
 // The oldest job somebody paid for. Bounded by `supporters`, not by the queue.
+//
+// CROSS JOIN, and it is not decoration. SQLite reorders a plain JOIN freely,
+// and with no ANALYZE statistics - which is every D1 database, including this
+// one - it guessed the other way round: drive off `idx_jobs_queue`, walk every
+// approved row, probe `supporters` for each. That reads the queue to prove
+// twelve payments are not in it, which is the exact cost this rewrite was for.
+// CROSS JOIN is SQLite's one promise about join order: the left table is the
+// outer loop. Twelve rows, each a rowid seek into jobs.
 const PICK_SUPPORTER = `SELECT j.id FROM supporters s
-                          JOIN jobs j ON j.id = s.job_id
+                          CROSS JOIN jobs j ON j.id = s.job_id
                          WHERE j.status = 'approved'
                          ORDER BY j.created_at ASC, j.id ASC`;
 
