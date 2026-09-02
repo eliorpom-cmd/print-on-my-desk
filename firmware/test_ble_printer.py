@@ -42,14 +42,41 @@ def check(label, got, want):
     return ok
 
 
+# The captures the replay tests read, and the one place that knows they may not
+# be here.
+#
+# `capture/` is the reverse-engineering bench: dozens of one-shot experiments
+# and the traces they produced, several of them pointed at one specific board.
+# What they FOUND is published as prose in the protocol document; the traces
+# themselves are not, so an open-source checkout has this file and no captures.
+#
+# A missing bench is not a failing test. It is three tests that cannot run, and
+# saying so out loud is better than a FileNotFoundError that reads like a
+# broken checkout - which is exactly how CI reported it the first time.
+TRACES = ROOT / "capture" / "traces"
+HAVE_TRACES = TRACES.is_dir()
+
+
 def load(trace):
-    lines = (ROOT / "capture" / "traces" / f"{trace}.jsonl").read_text().splitlines()
+    lines = (TRACES / f"{trace}.jsonl").read_text().splitlines()
     records = [json.loads(l) for l in lines]
     return records[0], records[1:]
 
 
+def skip_without_traces(what):
+    """True when the bench is absent, having said so."""
+    if HAVE_TRACES:
+        return False
+    print(f"\n{what}")
+    print(f"  -    ignore : pas de captures dans {TRACES.relative_to(ROOT)}")
+    print("       (le banc d'essai ne fait pas partie de l'edition publique)")
+    return True
+
+
 def test_frames_match_captures():
     """Every control frame ever sent must be rebuildable byte for byte."""
+    if skip_without_traces("Trames de controle rejouees depuis les captures"):
+        return
     print("\nTrames de controle rejouees depuis les captures")
     seen = 0
     for trace in ["a", "b", "c", "d", "e", "f"]:
@@ -70,6 +97,8 @@ def test_frames_match_captures():
 
 def test_notifications_parse():
     """The 6+n+1 layout must hold for every notification we ever received."""
+    if skip_without_traces("Decodage des notifications capturees"):
+        return
     print("\nDecodage des notifications capturees")
     total = 0
     for trace in ["a", "b", "c", "d", "e", "f"]:
@@ -104,6 +133,8 @@ def image_buffer(trace):
 
 def test_patterns_match_captures():
     """The hardcoded bitmaps must equal the ones the Mac actually sent."""
+    if skip_without_traces("Bitmaps du firmware compares aux tampons captures"):
+        return
     print("\nBitmaps du firmware compares aux tampons captures")
     cases = [
         ("noir plein", "c", fw.pattern_solid_black, fw.EXPECTED_CRC_BLACK),
@@ -119,6 +150,8 @@ def test_patterns_match_captures():
 
 def test_crc_matches_printer_report():
     """The CRC we compute must equal the one the printer echoed in AA."""
+    if skip_without_traces("CRC calcule par le firmware contre celui renvoye par l'imprimante"):
+        return
     print("\nCRC calcule par le firmware contre celui renvoye par l'imprimante")
     for trace in ["c", "d", "e", "f"]:
         _, events = load(trace)
@@ -131,6 +164,8 @@ def test_crc_matches_printer_report():
 
 def test_streaming_crc():
     """Incremental CRC over a stream must equal the one-shot CRC."""
+    if skip_without_traces("CRC calcule en flux, contre un tampon capture"):
+        return
     print("\nCRC incremental en streaming")
     buffer = image_buffer("f")
     running = 0
@@ -278,4 +313,10 @@ if __name__ == "__main__":
     if FAILURES:
         print(f"{len(FAILURES)} echec(s): {', '.join(FAILURES)}")
         sys.exit(1)
-    print("Tout est conforme aux captures M0.")
+    if HAVE_TRACES:
+        print("Tout est conforme aux captures M0.")
+    else:
+        # Not the same claim, and it must not read like it. Five tests replay
+        # the M0 captures and they did not run; what passed here is the logic
+        # that needs no bench - the framing, the caps, the order of the checks.
+        print("Verifie sans le banc d'essai : les rejeux de captures ont ete ignores.")
