@@ -18,7 +18,7 @@ WHAT IT IS A PORT OF
 firmware/ble_printer.py, which is where the protocol was worked out, byte by
 byte, against a real machine, with captures. Several things in here contradict
 every other implementation of this printer on the internet, and each one is a
-measurement rather than an opinion - docs/PROTOCOL.md says which and how.
+measurement rather than an opinion - docs/09-protocol.md says which and how.
 
 The JavaScript in web/bridge/printer.js is the same port again, for a browser.
 Three implementations of one protocol is two too many, and it is deliberate:

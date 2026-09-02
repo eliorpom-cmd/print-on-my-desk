@@ -482,7 +482,7 @@ def beep_tests(printer):
 
     print("  Dis-moi le numero de celle qui a marche, et je la fixe dans")
     print("  agent/config.py (BEEP_VARIANT). Si aucune n'a rien fait, on le")
-    print("  note dans docs/ESCPOS.md : cette machine ne se laisse pas sonner,")
+    print("  note dans docs/10-escpos.md : cette machine ne se laisse pas sonner,")
     print("  et le ticket a tip jar devra se signaler autrement.")
 
 

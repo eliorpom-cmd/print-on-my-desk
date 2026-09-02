@@ -11,7 +11,7 @@
 //
 // The MXW01 work is the part of this project worth publishing: a protocol
 // reverse-engineered from captures, with three upstream implementations proved
-// wrong on four points (docs/PROTOCOL.md). It is paused, not deleted. Every
+// wrong on four points (docs/09-protocol.md). It is paused, not deleted. Every
 // path it needs - the 384-wide canvas, the bare layout, firmware/ - still runs
 // and is still tested, so the day it is released it is released working.
 //
@@ -115,7 +115,7 @@ const TRP100 = {
   // Paid once per strip, not per ticket, because batching sends several
   // tickets in one print. At eight to a strip that is under 4 mm a ticket.
   //
-  // Never a cut. GS V / ESC i / ESC m are simply never sent - docs/ESCPOS.md.
+  // Never a cut. GS V / ESC i / ESC m are simply never sent - docs/10-escpos.md.
   feedLines: 220,
   // No rotation, and this is the one thing about the switch that is easy to
   // get wrong by inheriting it. GS v 0 prints its first raster line first and

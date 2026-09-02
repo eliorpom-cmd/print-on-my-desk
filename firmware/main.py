@@ -5,7 +5,7 @@
 #
 # The printer stops advertising after roughly ten minutes without a GATT
 # connection, and once it does, no BLE peer on earth can wake it - only its
-# button (docs/PROTOCOL.md, zone d'ombre 1). So every path through this loop,
+# button (docs/09-protocol.md, zone d'ombre 1). So every path through this loop,
 # including every failure path, has to come back to the radio inside nine
 # minutes. That is why the WiFi phase carries a deadline it cannot talk its way
 # out of, why a network outage shortens rather than lengthens the cycle, and

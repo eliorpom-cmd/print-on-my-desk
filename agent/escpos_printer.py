@@ -17,7 +17,7 @@
 # The bit order is REVERSED between our canvas and ESC/POS.
 #
 #   worker/src/bitmap.js packs bit 0 of a byte as the LEFTMOST pixel, because
-#   that is what the MXW01 capture showed (docs/PROTOCOL.md 5.1).
+#   that is what the MXW01 capture showed (docs/09-protocol.md 5.1).
 #   GS v 0 wants the MOST significant bit as the leftmost pixel, like every
 #   other raster format on earth.
 #
@@ -455,7 +455,7 @@ class TRP100:
         """What the printer says about itself, or {} when it says nothing.
 
         The bit meanings were confirmed on the hardware on 31 August - see the
-        header, and docs/ESCPOS.md section 3 for the readings.
+        header, and docs/10-escpos.md section 3 for the readings.
 
         Returns a dict with `paper`, `cover` and `raw`, any of which may be
         None when the printer did not answer.

@@ -12,7 +12,7 @@
 //   node tools/dump_bitmap.mjs "Texte" --invert --out inverted.bin
 //
 // --frame and --invert make the same ticket carry more ink, which is the only
-// lever the renderer has over the ejection phase of docs/PROTOCOL.md 6.2.
+// lever the renderer has over the ejection phase of docs/09-protocol.md 6.2.
 // --invert is white on black, so it costs a lot of heat as well as ink.
 //
 // --roll-tail moves the blank lines at the end of the buffer - the ones sent

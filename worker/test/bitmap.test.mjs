@@ -1,7 +1,7 @@
 // Host-side tests. No network, no hardware, no wrangler.
 //
 // The CRC assertions are not made up: they are the values this printer
-// reported over BLE during M0 and M1, recorded in docs/PROTOCOL.md. If the
+// reported over BLE during M0 and M1, recorded in docs/09-protocol.md. If the
 // Worker computes the same numbers for the same patterns, then its bit
 // packing, its byte order and its checksum all agree with the physical device.
 // That is a much stronger test than comparing against ourselves.
@@ -116,7 +116,7 @@ test("trimTail leaves one line rather than nothing", () => {
 test("a ticket ends on its stated margin and not a row more", () => {
   // Not a fix for the mystery margin. That claim was made in M4 and then
   // disproved by job 18, which ended on a printed line and produced the margin
-  // anyway - see docs/PROTOCOL.md 6.2. Trailing blank lines are simply paper
+  // anyway - see docs/09-protocol.md 6.2. Trailing blank lines are simply paper
   // nobody asked for.
   //
   // This used to demand zero blank rows, enforced by trimTail. That stopped

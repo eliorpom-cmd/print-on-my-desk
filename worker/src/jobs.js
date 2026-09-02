@@ -189,7 +189,7 @@ export function buildPayload(job, settings, profile = DEFAULT_PROFILE, supporter
     // nothing of the kind - so it proves less: D1 to the agent's buffer, over
     // HTTP and base64, and no further. Kept because that half is still worth
     // proving and costs nothing, and because pretending otherwise is how a
-    // guarantee quietly becomes a habit. docs/ESCPOS.md says so too.
+    // guarantee quietly becomes a habit. docs/10-escpos.md says so too.
     crc: canvas.crc8(),
     intensity: Number(settings.intensity),
     feed_lines: feedLines(settings, p),

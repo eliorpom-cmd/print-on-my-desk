@@ -3,7 +3,7 @@
 // Monochrome 384-pixel-wide canvas, in exactly the line format the MXW01 eats.
 //
 // The pixel packing is not a choice, it is what the capture showed
-// (docs/PROTOCOL.md 5.1): 48 bytes per line, bit set = black, and bit 0 of a
+// (docs/09-protocol.md 5.1): 48 bytes per line, bit set = black, and bit 0 of a
 // byte is the LEFTMOST pixel. That last part is the one everybody gets wrong.
 //
 // The CRC8 here is the same Dallas/Maxim variant as the control frames, and it
@@ -125,7 +125,7 @@ export class Canvas {
    * This was believed in M4 to be the cause of the "mystery margin", on three
    * prints that looked conclusive and were not: the test moved blank lines
    * from the tail to the head, so both ends changed. Job 18 ended on a printed
-   * line and produced the margin anyway. See docs/PROTOCOL.md 6.2.
+   * line and produced the margin anyway. See docs/09-protocol.md 6.2.
    *
    * Kept because it is right on its own terms - about 1.25 mm a ticket of
    * paper nobody asked for - and not because it fixes anything.

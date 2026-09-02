@@ -159,7 +159,7 @@ class FakeBleClient:
             self._notify(bp.CMD_PRINT_DONE, bytes([0x00, reported, reported]))
 
     def _status_payload(self):
-        # Ten bytes, laid out at the offsets docs/PROTOCOL.md gives: state,
+        # Ten bytes, laid out at the offsets docs/09-protocol.md gives: state,
         # then two spare, then supply, temperature, spare, error flag, two
         # spare, paper.
         p = bytearray(10)

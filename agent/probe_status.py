@@ -4,7 +4,7 @@
 #
 # WHY THIS EXISTS
 #
-# docs/PROTOCOL.md opens on a rule the whole project has kept: nothing is
+# docs/09-protocol.md opens on a rule the whole project has kept: nothing is
 # written down without a capture behind it. Following it is what found the four
 # things every upstream MXW01 implementation had wrong, including a CRC three
 # projects had given up on as "payload unknown".
@@ -18,7 +18,7 @@
 # printed with nothing on the floor (ETAT 2.11bis).
 #
 # So: run this, put the printer through the four states, and write down what
-# comes back. docs/ESCPOS.md has the table waiting for the numbers.
+# comes back. docs/10-escpos.md has the table waiting for the numbers.
 #
 # It never prints. Nothing here sends a raster, a feed or a cut, so it costs no
 # paper and can be run as many times as it takes.
@@ -158,7 +158,7 @@ def main():
         print("Cette imprimante n'expose aucun point de terminaison bulk IN.")
         print("Elle ne peut rien rapporter, et status() repondra toujours 'inconnu'.")
         print("Ce n'est pas bloquant - l'agent imprime quand meme - mais le")
-        print("rouleau vide ne sera jamais detecte, et docs/ESCPOS.md doit le dire.")
+        print("rouleau vide ne sera jamais detecte, et docs/10-escpos.md doit le dire.")
         return 1
 
     if not interactive:
@@ -174,7 +174,7 @@ def main():
         sweep(printer, label)
 
     print("\nColle ce qui precede dans la conversation. Ca remplit la section 3")
-    print("de docs/ESCPOS.md et remplace les avertissements 'non confirme'")
+    print("de docs/10-escpos.md et remplace les avertissements 'non confirme'")
     print("dans escpos_printer.status() par les vrais bits.")
     return 0
 

@@ -27,6 +27,10 @@ The agent is the same above that line: the same queue, the same long poll, the
 same heartbeat, the same refusal to claim work it cannot print. Only the driver
 underneath changes.
 
+For the USB one, [10-escpos](10-escpos.md) is worth ten minutes before you
+start: what your printer's real dot width is and how to measure it rather than
+read it, why nothing here ever cuts a ticket, and how the roll is detected.
+
 **For Bluetooth you also need a radio and one package:**
 
 ```sh

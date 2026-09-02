@@ -61,6 +61,9 @@ its emulation, its character width, and its interface.
 
 If it speaks ESC/POS over USB, `agent/escpos_printer.py` will probably drive
 it, possibly after changing the width in `worker/src/profiles.js`.
+[10-escpos](10-escpos.md) says how to find that width by measurement rather
+than by trusting a listing — most 80 mm printers are 576 dots and some are
+512, and the wrong one costs you an afternoon.
 
 If it speaks something else, you are writing a driver. The interface it has to
 meet is small — connect, status, print a bitmap, feed — and `agent/fakes.py`

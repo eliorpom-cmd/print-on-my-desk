@@ -72,7 +72,7 @@ BLE_ADDRESS = None
 # you hear on an open lid is an alarm wired to the sensors.
 #
 # The thank-you ticket makes its noise with the print head instead: three bands
-# of solid black, which is the loudest thing the head does. See docs/ESCPOS.md.
+# of solid black, which is the loudest thing the head does. See docs/10-escpos.md.
 #
 # 3 rather than 0, so that plugging a melody box into the drawer port would
 # just work, with nothing else to change.

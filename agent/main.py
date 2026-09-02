@@ -171,7 +171,7 @@ class Agent:
             # saying so is better than guessing.
             #
             # This printer LEAVES THE USB BUS when the roll is removed or the
-            # lid is opened (31 August, docs/ESCPOS.md 3). From here that looks
+            # lid is opened (31 August, docs/10-escpos.md 3). From here that looks
             # exactly like the cable being pulled: the device is not there, and
             # a device that is not there cannot be asked why. So the message
             # names all three, and whoever reads it can look at the machine.

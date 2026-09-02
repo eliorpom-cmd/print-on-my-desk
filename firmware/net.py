@@ -275,7 +275,7 @@ def request(
     means carrying a root bundle and paying for the chain check in RAM, and the
     only thing it would buy here is protection against an attacker already
     sitting on the home WiFi. The shared token would be what leaks. Revisit if
-    the Pico ever runs anywhere but this flat - see docs/ETAT.md.
+    the Pico ever runs anywhere but this flat.
     """
     scheme, host, port, path = _split_url(url)
     timeout_s = timeout_ms / 1000

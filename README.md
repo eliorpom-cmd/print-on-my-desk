@@ -137,6 +137,7 @@ everything held for your approval. If you point this at a wider audience, read
 | [07 · Operating](docs/07-operating.md) | Limits, heat, paper, closing, costs |
 | [08 · Troubleshooting](docs/08-troubleshooting.md) | When it does not work |
 | [09 · The protocol](docs/09-protocol.md) | How the Bluetooth printer actually works |
+| [10 · ESC/POS](docs/10-escpos.md) | The 80 mm receipt printer, over USB |
 | [AGENTS.md](AGENTS.md) | For a coding assistant doing this with you |
 
 ---

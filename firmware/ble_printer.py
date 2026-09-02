@@ -1,7 +1,7 @@
 # MXW01 thermal printer driver for MicroPython / aioble.
 #
 # Every byte in this file is backed by a capture in capture/traces and
-# documented in docs/PROTOCOL.md. Nothing here is guessed from a reference
+# documented in docs/09-protocol.md. Nothing here is guessed from a reference
 # implementation, and two things deliberately contradict them:
 #
 #   * The printer advertises service af30 but exposes ae30 in its GATT table.
@@ -85,7 +85,7 @@ MIN_PRINT_INTERVAL_MS = 20000
 
 # The printer stops advertising after roughly 10 minutes without a GATT
 # connection, and no BLE peer can wake it after that - only the button.
-# Measured between 9.3 and 10.3 minutes (docs/PROTOCOL.md, zone d'ombre 1).
+# Measured between 9.3 and 10.3 minutes (docs/09-protocol.md, zone d'ombre 1).
 SLEEP_TIMEOUT_MS = 9 * 60 * 1000
 # Safety margin: reconnect well before the deadline.
 KEEPALIVE_INTERVAL_MS = 5 * 60 * 1000
@@ -201,7 +201,7 @@ class PrinterNoPaper(PrinterError):
     Worth its own class because it is the one failure that silently destroys a
     message: with no paper the printer still accepts the whole buffer, still
     answers with the right CRC - it did receive the bytes - and the job goes to
-    'printed' with nothing on the floor. See docs/PROTOCOL.md 3.3.
+    'printed' with nothing on the floor. See docs/09-protocol.md 3.3.
     """
 
 
