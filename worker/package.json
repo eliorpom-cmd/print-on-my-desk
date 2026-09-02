@@ -8,7 +8,7 @@
     "deploy": "wrangler deploy",
     "test": "node --test test/*.test.mjs",
     "db:local": "wrangler d1 execute printer --local --file=schema.sql",
-    "db:remote": "wrangler d1 execute printer --remote --file=schema.sql"
+    "db:remote": "wrangler d1 execute printer --remote --yes --file=schema.sql"
   },
   "devDependencies": {
     "linkedom": "^0.18.13",

@@ -4,6 +4,13 @@
 -- database, and re-applied whenever it changes. Never put a destructive
 -- statement in here.
 --
+-- That guarantee is load-bearing in one more place than it looks. Applying
+-- this to a live database has to be safe to do unattended, because the set-up
+-- it belongs to is meant to run start to finish without a human at the
+-- keyboard - and that is only defensible while nothing in this file can
+-- destroy data. A statement that could would need a confirmation back, and
+-- every script that applies it changed with it.
+--
 -- All timestamps are milliseconds since the epoch, so they line up with
 -- Date.now() in the Worker and need no conversion anywhere.
 
