@@ -1,61 +1,65 @@
 /* The page.
  *
- * Deliberately plain, and deliberately in one file with no build step: the
- * point of this project is that somebody can change it. A design system you
- * have to learn before you can move a margin is a design system that stops
- * people from making the thing theirs.
+ * Dark, quiet, and in one file with no build step: the point of this project
+ * is that somebody can change it, and a design system you have to learn before
+ * you can move a margin is a design system that stops people making it theirs.
  *
- * Everything worth changing is in :root. Change the four colours and the two
- * fonts and it is a different site.
+ * THE ONE IDEA. The page carries no typeface of its own for your message.
+ * What you type is drawn with the printer's own atlas - the same bitmap the
+ * print head lays down, 384 dots across, one bit deep - so the preview is the
+ * ticket rather than a picture of one. Everything else on the page is set in
+ * whatever the operating system already has, because a page whose whole
+ * argument is "these are the real dots" should not also be shipping fonts.
+ *
+ * That is why there is no web font here and no web/fonts directory. It also
+ * means the site inherits your ticket font: run
+ *
+ *     python tools/build_font.py --preset typewriter
+ *     node tools/sync_web.mjs
+ *
+ * and the headline, the preview and the paper all change together, because
+ * they were never three things.
+ *
+ * THE TOKENS. Change these nine values and it is a different site.
+ * `--paper` and `--ink` are the PAGE's ground and figure, not the physical
+ * roll: /admin borrows this stylesheet and paints itself with them, so they
+ * have to mean "background" and "text" or the desk comes out unreadable. The
+ * actual thermal stock is `--stock`, and it stays light in every theme,
+ * because paper does.
  */
 
 :root {
-  --paper: #f4f1ea;
-  --ink: #14130f;
-  --mute: #6d6a62;
-  --slot: #14130f;
-  --ok: #2f7a45;
-  --warn: #a8620f;
-  --off: #9a9791;
+  color-scheme: dark;
 
-  --display: "Kode Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --body: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --paper: #0e0f11;        /* the page */
+  --ink: #e9e9e6;          /* text on it */
+  --mute: #8b8e91;         /* secondary text */
+  --rule: #26282b;         /* hairlines and borders */
+  --dot: #3b3e42;          /* an indicator that is off */
+  --alert: #e2604a;        /* refused, paused, out of paper. Nothing else. */
+  --ok: #74c58e;
+  --warn: #d8a24a;
+  --off: #55585c;
+  --slot: #3b3e42;
+
+  /* The roll. Light in every theme, because paper is. */
+  --stock: #f4f3ee;
+  --stock-ink: #14140f;
+
+  /* No web fonts, on purpose - see the note above. */
+  --display: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --body: var(--display);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --edge: 1.25rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #14130f;
-    --ink: #f4f1ea;
-    --mute: #9a9791;
-    --slot: #f4f1ea;
-    --ok: #6fc98a;
-    --warn: #e2a45c;
-    --off: #55524c;
-  }
-}
-
-@font-face {
-  font-family: "Kode Mono";
-  src: url("/fonts/kode-mono-latin.woff2") format("woff2");
-  font-weight: 400 700;
-  font-display: swap;
-  unicode-range: U+0000-00FF, U+2000-206F, U+2192, U+2212;
-}
-@font-face {
-  font-family: "Kode Mono";
-  src: url("/fonts/kode-mono-latin-ext.woff2") format("woff2");
-  font-weight: 400 700;
-  font-display: swap;
-  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020-20AB;
+  --col: 34rem;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  padding: var(--edge);
+  padding: var(--edge) var(--edge) 5rem;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--body);
@@ -64,153 +68,230 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-main { max-width: 34rem; margin: 0 auto; }
+main { max-width: var(--col); margin: 0 auto; }
+
+a { color: var(--ink); }
 
 .sr {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;
 }
 
-/* --- header --------------------------------------------------------------- */
+/* --- header ---------------------------------------------------------------
+   Small on purpose. The paper below is the headline; a big title competing
+   with it would be two headlines and no hierarchy. */
 
 .head {
-  display: flex; align-items: flex-start; justify-content: space-between;
-  gap: 1rem; margin-bottom: 1.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; margin-bottom: 1rem;
 }
 
 h1 {
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: clamp(20px, 6vw, 28px);
-  letter-spacing: 0.06em;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   margin: 0;
-  line-height: 1.1;
+  color: var(--ink);
 }
 
-.head__side { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+.head__side { display: flex; align-items: center; gap: 0.7rem; flex-shrink: 0; }
 
 .state {
   display: inline-flex; align-items: center; gap: 0.4rem;
-  margin: 0; font-size: 12px; color: var(--mute);
-  letter-spacing: 0.04em; text-transform: lowercase;
+  margin: 0; font-size: 11px; color: var(--mute);
+  letter-spacing: 0.08em; text-transform: uppercase;
 }
-.state__mark {
-  width: 8px; height: 8px; border-radius: 50%; background: var(--off);
-}
+.state__mark { width: 6px; height: 6px; border-radius: 50%; background: var(--off); }
 .state--ready .state__mark { background: var(--ok); }
 .state--warn .state__mark { background: var(--warn); }
-.state--paused .state__mark { background: var(--off); }
+.state--paused .state__mark { background: var(--alert); }
 
-.tally { margin: 0; font-size: 12px; color: var(--mute); }
+.tally { margin: 0; font-size: 11px; color: var(--mute); letter-spacing: 0.05em; }
+.tally[hidden] { display: none; }
 
 .info {
-  width: 1.6rem; height: 1.6rem; border-radius: 50%;
-  border: 1px solid var(--mute); background: none; color: var(--mute);
-  font-family: var(--display); font-size: 12px; cursor: pointer;
-  line-height: 1;
+  width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  border: 1px solid var(--rule); background: none; color: var(--mute);
+  font-family: var(--mono); font-size: 11px; cursor: pointer; line-height: 1;
 }
 .info:hover { border-color: var(--ink); color: var(--ink); }
 
 .notes {
-  border: 1px solid var(--mute); padding: 0.9rem 1rem;
-  margin-bottom: 1.5rem; font-size: 13px; color: var(--mute);
+  border: 1px solid var(--rule); padding: 0.85rem 1rem;
+  margin-bottom: 1rem; font-size: 13px; color: var(--mute);
 }
+.notes[hidden] { display: none; }
 .notes ul { margin: 0; padding-left: 1.1rem; }
 .notes li + li { margin-top: 0.35rem; }
 
-.lede { margin: 0 0 1.5rem; color: var(--mute); }
+/* --- the sheet ------------------------------------------------------------
+   The only light object on the page, because on a desk it is the only light
+   object too. The textarea sits on top of it, invisible: the paper IS the
+   field, and the preview underneath is what the print head would lay down. */
 
-/* --- the form ------------------------------------------------------------- */
+.sheet-wrap { position: relative; background: var(--stock); }
 
-textarea, input[type="text"] {
-  width: 100%; padding: 0.8rem;
+.sheet-wrap::after {         /* the tear edge */
+  content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 8px;
+  background: var(--stock);
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 7px);
+  mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 7px);
+}
+
+#preview { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+
+textarea#text {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  background: transparent; border: 0; padding: 0; margin: 0; resize: none;
+  color: transparent; caret-color: transparent;
+  font: 16px/1 var(--body);   /* 16px: anything smaller zooms iOS on focus */
+  outline: none;
+}
+.sheet-wrap:focus-within { box-shadow: 0 0 0 1px var(--ink); }
+
+/* --- the measures ---------------------------------------------------------
+   Both are real: 30 columns is what the margin leaves of 384 dots, and 203 dpi
+   is eight dots to the millimetre. */
+
+.gauge {
+  display: flex; justify-content: space-between; gap: 1rem;
+  margin-top: 1.4rem; font-family: var(--mono); font-size: 11px;
+  color: var(--mute); letter-spacing: 0.04em;
+}
+.gauge .over { color: var(--alert); }
+
+/* --- the form -------------------------------------------------------------- */
+
+.row { display: flex; align-items: center; gap: 0.6rem; margin: 0.7rem 0 0; }
+
+input[type="text"] {
+  flex: 1; padding: 0.7rem 0.8rem;
   background: transparent; color: var(--ink);
-  border: 1px solid var(--ink);
-  font: inherit; resize: vertical;
+  border: 1px solid var(--rule);
+  font: inherit; font-size: 14px;
 }
-textarea:focus, input[type="text"]:focus {
-  outline: 2px solid var(--ink); outline-offset: 2px;
-}
+input[type="text"]::placeholder { color: var(--off); }
+input[type="text"]:focus { outline: none; border-color: var(--ink); }
 
-.row {
-  display: flex; align-items: center; gap: 0.75rem; margin: 0.75rem 0 1rem;
-}
-.row input { flex: 1; }
-.count { margin: 0; font-size: 12px; color: var(--mute); white-space: nowrap; }
+.count { margin: 0; font-size: 11px; color: var(--mute); white-space: nowrap;
+  font-family: var(--mono); }
+.count--full { color: var(--alert); }
 
 button[type="submit"] {
-  width: 100%; padding: 0.95rem;
+  width: 100%; margin-top: 0.7rem; padding: 0.85rem;
   background: var(--ink); color: var(--paper);
   border: 1px solid var(--ink);
-  font-family: var(--display); font-weight: 700; font-size: 15px;
-  letter-spacing: 0.12em; cursor: pointer;
+  font-family: var(--display); font-weight: 600; font-size: 13px;
+  letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer;
   transition: background-color 0.12s linear, color 0.12s linear;
 }
 button[type="submit"]:hover:not(:disabled) { background: var(--paper); color: var(--ink); }
-button[type="submit"]:disabled { opacity: 0.5; cursor: default; }
+button[type="submit"]:disabled { opacity: 0.35; cursor: default; }
 
-.over { border-top: 1px solid var(--mute); margin-top: 2rem; padding-top: 1.5rem; }
-.over h2 { font-family: var(--display); font-size: 18px; margin: 0 0 0.75rem; }
-.over a { color: var(--ink); margin-right: 1rem; }
+.lede { margin: 1.4rem 0 0; color: var(--mute); font-size: 13.5px; }
 
-/* --- the printing animation ----------------------------------------------- */
-/*
- * The page goes white, a slot opens, and the paper comes out of it. The pixels
- * are not a drawing: app.js renders the ticket with the same code the Worker
- * uses, so what you watch is what the print head lays down.
+.over { border-top: 1px solid var(--rule); margin-top: 2.5rem; padding-top: 1.5rem; }
+.over[hidden] { display: none; }
+.over h2 { font-size: 16px; margin: 0 0 0.75rem; font-weight: 600; }
+.over a { margin-right: 1rem; }
+
+/* --- the printing animation ------------------------------------------------
+ * The page goes dark, a slot opens, and the paper comes out of it, printed one
+ * band of rows at a time. The pixels are not a drawing: app.js renders the
+ * ticket with the same code the Worker uses.
+ *
+ * THE `[hidden]` RULES BELOW ARE LOAD-BEARING. `.print` sets `display: flex`,
+ * and an author rule beats the browser's own `[hidden] { display: none }`
+ * whatever its specificity - so without the explicit override the overlay is
+ * painted over the whole page from the first frame and the site is unusable.
+ * The same trap is waiting for any element here that gets a `display` of its
+ * own, which is why the other three are spelled out too rather than left to
+ * luck.
+ *
+ * app.js drives the `is-*` classes in order: is-white (the page fades out),
+ * is-slot (the slot opens), is-feeding (paper advances), is-out (it is done).
+ * A refused message never opens the slot. Every one of them needs a rule here
+ * or the state exists in the script and means nothing on screen.
  */
 
 .print {
-  position: fixed; inset: 0; z-index: 10;
+  position: fixed; inset: 0; z-index: 20;
   background: var(--paper);
   display: flex; flex-direction: column; align-items: center;
-  padding: 3rem 1rem;
-  overflow-y: auto;
+  padding: 18vh 1rem 5rem; overflow-y: auto;
+  opacity: 0; transition: opacity 0.45s ease;
 }
+.print[hidden] { display: none; }
+.print.is-white { opacity: 1; }
 
 .print__slot {
-  width: min(320px, 86vw); height: 3px; background: var(--slot);
-  flex-shrink: 0;
+  width: min(384px, 86vw); height: 3px; background: var(--slot); flex-shrink: 0;
+  transform: scaleX(0);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
+.print.is-slot .print__slot,
+.print.is-feeding .print__slot,
+.print.is-out .print__slot { transform: scaleX(1); }
 
-.print__strip {
-  width: min(320px, 86vw);
-  overflow: hidden;
-  height: 0;
-  transition: height 1.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+/* One screen pixel per printer dot at full size: the paper on screen is as
+   wide as the paper in the flat, or the animation is of something else. */
+.print__strip { width: min(384px, 86vw); overflow: hidden; height: 0; }
+.print.is-feeding .print__strip,
+.print.is-out .print__strip {
+  height: var(--strip-h, 200px);
+  border-bottom: 1px dashed var(--dot);
 }
 .print__strip canvas {
-  display: block; width: 100%; height: auto;
-  image-rendering: pixelated;
+  display: block; width: 100%; height: auto; image-rendering: pixelated;
 }
+
+/* The paper does not slide in finished: it is printed, and it advances by the
+   same increment each time. The step count and the duration come from app.js,
+   sized to the real ticket. */
+@keyframes feed {
+  from { clip-path: inset(0 0 100% 0); transform: translateY(-8px); }
+  to   { clip-path: inset(0 0 0 0);    transform: translateY(0); }
+}
+
+.print__note, .print__close { opacity: 0; transition: opacity 0.3s ease; }
+.print.is-out .print__note, .print.is-out .print__close { opacity: 1; }
 
 .print__note {
-  margin: 1.5rem 0 0; color: var(--mute); font-size: 13px;
-  text-align: center; max-width: 24rem;
+  margin: 1.4rem 0 0; color: var(--mute); font-size: 12.5px;
+  text-align: center; max-width: 24rem; min-height: 1.4rem;
 }
+.print__note--error { color: var(--alert); }
+
+/* A refused message never opens the slot: no line, no paper, and the message
+   sits where it can be read instead of where a ticket would have hung. */
+.print.is-refused .print__slot { transform: scaleX(0); }
+.print.is-refused .print__strip { height: 0; border-bottom: 0; }
+.print.is-refused .print__note { margin-top: 0; }
 
 .print__close {
-  margin-top: 1.5rem; padding: 0.7rem 1.2rem;
-  background: none; color: var(--ink); border: 1px solid var(--ink);
-  font-family: var(--display); font-size: 13px; letter-spacing: 0.08em;
-  cursor: pointer;
+  margin-top: 1.2rem; padding: 0.6rem 1.2rem;
+  background: none; color: var(--ink); border: 1px solid var(--rule);
+  font-family: var(--display); font-size: 12px; letter-spacing: 0.1em;
+  text-transform: uppercase; cursor: pointer;
 }
-.print__close:hover { background: var(--ink); color: var(--paper); }
+.print__close:hover { border-color: var(--ink); }
 
-/* --- the optional invitation ---------------------------------------------- */
+/* --- the optional invitation ----------------------------------------------- */
 
 .sheet {
   position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%);
   width: min(28rem, calc(100vw - 2rem)); z-index: 20;
-  background: var(--paper); border: 1px solid var(--ink);
+  background: var(--paper); border: 1px solid var(--rule);
   padding: 1rem 1.1rem;
 }
-.sheet h2 { font-family: var(--display); font-size: 15px; margin: 0 0 0.4rem; }
+.sheet[hidden] { display: none; }
+.sheet h2 { font-size: 14px; margin: 0 0 0.4rem; font-weight: 600; }
 .sheet p { margin: 0 0 0.8rem; font-size: 13px; color: var(--mute); }
 .sheet a {
   display: inline-block; padding: 0.5rem 0.9rem; margin-right: 0.6rem;
   background: var(--ink); color: var(--paper); text-decoration: none;
-  font-family: var(--display); font-size: 12px; letter-spacing: 0.08em;
+  font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
 }
 .sheet button {
   background: none; border: none; color: var(--mute);

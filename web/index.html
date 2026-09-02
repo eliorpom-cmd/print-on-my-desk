@@ -8,19 +8,30 @@
      MAKE IT YOURS
      Everything you need to change is in this block and in style.css. Nothing
      below the </head> knows your name.
+
+     The one thing worth understanding before you change anything: this page
+     has no typeface of its own for the message. What somebody types is drawn
+     with the printer's own atlas, so the preview IS the ticket. Change the
+     ticket font and the page changes with it:
+
+         python tools/build_font.py --preset typewriter
+         node tools/sync_web.mjs
+         node tools/og_image.mjs        # the social card, same font
+
      ========================================================================== -->
 <title>Print on my desk</title>
 <meta name="description" content="Write a message. It comes out on a thermal printer, on real paper, on somebody's desk.">
 <meta property="og:title" content="Print on my desk">
 <meta property="og:description" content="Write a message. It comes out on a thermal printer, on real paper, on somebody's desk.">
 <meta property="og:type" content="website">
-<!-- Set this to your own address once you have deployed, or delete the three
-     og: lines: a half-filled preview looks worse than none. -->
+<meta property="og:image" content="/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<!-- Set this to your own address once you have deployed, or delete the og:url
+     line: a half-filled preview looks worse than none. -->
 <!-- <meta property="og:url" content="https://YOUR-WORKER.workers.dev/"> -->
 
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="dark">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="/fonts/kode-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -28,7 +39,7 @@
 <main>
   <header class="head">
     <!-- Your printer's name. Two words is plenty. -->
-    <h1>PRINT ON MY DESK</h1>
+    <h1>Print on my desk</h1>
     <div class="head__side">
       <p class="state state--loading" id="state">
         <span class="state__mark" aria-hidden="true"></span>
@@ -53,24 +64,38 @@
     </ul>
   </div>
 
-  <p class="lede">
-    Write something. It comes out on paper, on a real printer, on a real desk.
-  </p>
-
   <form id="form" autocomplete="off">
-    <label class="sr" for="text">Your message</label>
-    <textarea id="text" name="text" maxlength="200" rows="4"
-              placeholder="say something" required></textarea>
+    <!-- The paper is the field. The textarea sits on top of the preview,
+         invisible, so that the only rendering of anybody's words on this page
+         is the printer's own. preview.js draws it; app.js does the rest. -->
+    <div class="sheet-wrap">
+      <canvas id="preview" aria-hidden="true"></canvas>
+      <label class="sr" for="text">Your message</label>
+      <textarea id="text" name="text" maxlength="200" rows="4"
+                spellcheck="false" required></textarea>
+    </div>
+
+    <p class="gauge">
+      <span id="gauge-cols">0 / 30 columns</span>
+      <span id="gauge-mm">0.0 mm of paper</span>
+    </p>
 
     <div class="row">
       <label class="sr" for="handle">Your name, if you like</label>
       <input id="handle" name="handle" type="text" maxlength="30"
              placeholder="your name (optional)">
-      <p class="count"><span id="count">0</span>/200</p>
+      <!-- The whole "0/200" lives inside the span: app.js writes both halves.
+           Splitting it leaves the static half behind and the page reads 0/200/200. -->
+      <p class="count"><span id="count">0/200</span></p>
     </div>
 
-    <button type="submit" id="send">PRINT IT</button>
+    <button type="submit" id="send">Print it</button>
   </form>
+
+  <p class="lede">
+    Every dot above is a real dot. It comes out on paper, on a real printer,
+    on a real desk.
+  </p>
 
   <!-- Shown when the owner closes the service. Write what you want people to
        read when there is nothing to write. -->
@@ -79,14 +104,14 @@
     <p>Thank you for taking part. Nothing new is being taken; what is already
        in the queue is still coming out.</p>
     <p>
-      <a id="over-site" href="https://github.com/eliorpom-cmd/print-on-my-desk">Build your own</a>
+      <a id="over-site" href="https://github.com/your-account/print-on-my-desk">Build your own</a>
       <!-- A second link, if you have somewhere to send people. -->
       <a id="over-threads" href="#" hidden>Elsewhere</a>
     </p>
   </section>
 </main>
 
-<!-- The white-out and the paper. Do not rename these ids: app.js drives them. -->
+<!-- The blackout and the paper. Do not rename these ids: app.js drives them. -->
 <div class="print" id="print" hidden>
   <div class="print__slot" aria-hidden="true"></div>
   <div class="print__strip" id="strip">
@@ -107,6 +132,7 @@
 
 <div id="paper" hidden></div>
 
+<script type="module" src="/preview.js"></script>
 <script type="module" src="/app.js"></script>
 </body>
 </html>

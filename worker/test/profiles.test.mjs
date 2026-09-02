@@ -25,6 +25,8 @@ import { Canvas } from "../src/bitmap.js";
 import { PROFILES, profileFor, DEFAULT_PROFILE, linesToMm, mmToLines } from "../src/profiles.js";
 import { renderTicket, renderBatch, composeTicket, charsPerLine, LAYOUT } from "../src/render.js";
 import { buildPayload, buildBatchPayload, feedLinesKey } from "../src/jobs.js";
+import { ADVANCE } from "../src/font.js";
+import ATLAS from "../src/font-atlas.js";
 import { loadSettings } from "../src/settings.js";
 // The default lives in settings.js DEFAULTS, which is not exported; read it
 // the way the module does, through a database that has no settings at all.
@@ -172,8 +174,16 @@ test("a handle costs no LINE on the bare ticket, only its descender", () => {
 });
 
 test("the wider paper fits more characters, and the margin is a real margin", () => {
-  assert.equal(charsPerLine(MXW01), 31);
-  assert.equal(charsPerLine(TRP100), 39);
+  // Derived from the pitch rather than written down. The two claims in this
+  // test's name - wider paper fits more, and the margin is real - are true of
+  // any font; the exact counts are true only of the one currently built, and
+  // hardcoding them made this test fail on `build_font.py --preset terminal`,
+  // which is a supported thing to do rather than a mistake.
+  const fits = (p) => Math.floor((p.widthPixels - 2 * p.margin) / ADVANCE);
+  assert.equal(charsPerLine(MXW01), fits(MXW01));
+  assert.equal(charsPerLine(TRP100), fits(TRP100));
+  assert.ok(charsPerLine(TRP100) > charsPerLine(MXW01),
+    "the wider printer must fit more characters per line");
   // 2.8 mm rather than 0.75. The old margin read as "the renderer ran out of
   // paper" on a printer that had none to spare.
   assert.ok(TRP100.margin / TRP100.dotsPerMm > 2.5);
@@ -378,24 +388,56 @@ test("the line ceiling is the host's, not a global one", () => {
 
 // --- the paused printer must still work -------------------------------------
 
+/**
+ * Rendered output, pinned per font.
+ *
+ * These are fixed points for the renderer, and the renderer alone: the bytes
+ * depend on which atlas is built, so the table is keyed by it. Changing the
+ * ticket font is a supported thing to do - `build_font.py --preset terminal` -
+ * and it must be a DELIBERATE act with a row added here, not a test that
+ * quietly goes green because somebody re-pinned it to its own output.
+ *
+ * Where each row came from, because provenance is the whole value:
+ *
+ *   GoogleSansCode-Regular  Not this file's own output. Taken by checking out
+ *                           worker/src/{bitmap,render,font,font-atlas}.js at
+ *                           072c8fe - the last commit before the switch - and
+ *                           rendering the same two tickets against it.
+ *   JetBrainsMono-Regular   This file's own output, at the commit that added
+ *                           the row, because this font had never shipped and
+ *                           so there is no earlier state to appeal to. It
+ *                           guards every refactor from that commit onward,
+ *                           which is what a golden test does; it cannot also
+ *                           guard the switch that introduced it.
+ */
+const SHIPPED = {
+  "GoogleSansCode-Regular": [["Bonjour", 58, 0x74], ["Le petit chat", 58, 0x9c]],
+  "JetBrainsMono-Regular": [["Bonjour", 57, 0xcf], ["Le petit chat", 57, 0x43]],
+};
+
 test("the small printer still renders exactly as it shipped", () => {
   // The MXW01 work is what is going out as open source. A refactor done for
-  // another machine is exactly how it would quietly stop working, so these are
-  // fixed points.
-  //
-  // The numbers are not this file's own output. They were taken by checking
-  // out worker/src/{bitmap,render,font,font-atlas}.js at 072c8fe - the last
-  // commit before the switch - and rendering the same two tickets against it.
-  // Asserting against ourselves would only prove we are consistent.
-  for (const [text, lines, crc] of [
-    ["Bonjour", 58, 0x74],
-    ["Le petit chat", 58, 0x9c],
-  ]) {
+  // another machine is exactly how it would quietly stop working.
+  const expected = SHIPPED[ATLAS.name];
+  assert.ok(expected,
+    `no pinned rendering for the atlas in worker/src/font-atlas.js (${ATLAS.name}).\n` +
+    `Add a row to SHIPPED above with the height and crc8 this build produces, ` +
+    `and say in the comment where the numbers came from. Do not delete this test.`);
+  for (const [text, lines, crc] of expected) {
     const canvas = renderTicket(text, { id: 1, createdAt: 0, profile: MXW01 });
     assert.equal(canvas.height, lines, `${text}: height`);
     assert.equal(canvas.crc8(), crc, `${text}: crc`);
     assert.equal(canvas.widthBytes, 48);
   }
+});
+
+test("the pinned renderings cover the atlas that is actually built", () => {
+  // The guard on the guard. Without it, a font change that nobody adds a row
+  // for turns the test above into a single assert.ok that passes on any
+  // rendering at all - which is the failure mode this project has already paid
+  // for twice: an assertion whose subject drifted away from its own subject.
+  assert.ok(ATLAS.name in SHIPPED,
+    `worker/src/font-atlas.js ships ${ATLAS.name}, which SHIPPED does not pin`);
 });
 
 // --- the thank-yous-only mode -----------------------------------------------

@@ -1,0 +1,95 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Social card</title>
+<!--
+  The social card, 1200x630.
+
+  It is not a picture OF a ticket: the strip below is rendered by web/lib, the
+  same code the Worker uses, so the card carries whatever ticket font is
+  currently built. Change the font and re-run `node tools/og_image.mjs` and the
+  card changes with it - there is no second artwork to keep in sync.
+
+  Everything else is the page's own tokens, read from style.css rather than
+  restated here, for the same reason.
+-->
+<link rel="stylesheet" href="/style.css">
+<style>
+  html, body { margin: 0; background: var(--paper); }
+  .card {
+    width: 1200px; height: 630px; position: relative; overflow: hidden;
+    background: var(--paper); color: var(--ink);
+    display: flex; align-items: center; gap: 72px; padding: 0 88px;
+    font-family: var(--display);
+  }
+  .left { flex: 1; min-width: 0; }
+  .eyebrow {
+    font-size: 20px; letter-spacing: 0.26em; text-transform: uppercase;
+    color: var(--mute); margin: 0 0 26px;
+  }
+  h1 {
+    font-size: 88px; line-height: 1.02; font-weight: 600; letter-spacing: -0.025em;
+    margin: 0; text-transform: none;
+  }
+  p.sub { font-size: 27px; line-height: 1.4; color: var(--mute); margin: 30px 0 0; max-width: 20ch; }
+  .meta {
+    position: absolute; left: 88px; bottom: 54px;
+    font-family: var(--mono); font-size: 19px; color: var(--mute); letter-spacing: 0.06em;
+  }
+  /* The paper, at a slight angle, running off the bottom edge the way a strip
+     that has not been torn off yet actually does. */
+  .strip {
+    width: 384px; flex: none; background: var(--stock);
+    padding: 18px 0 0; transform: rotate(2.2deg) translateY(26px);
+    box-shadow: 0 34px 70px -20px rgba(0,0,0,.75);
+  }
+  .strip canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+  .strip .tear {
+    height: 12px; background: var(--stock);
+    -webkit-mask: repeating-linear-gradient(90deg, #000 0 8px, transparent 8px 9px);
+    mask: repeating-linear-gradient(90deg, #000 0 8px, transparent 8px 9px);
+  }
+</style>
+
+<div class="card">
+  <div class="left">
+    <p class="eyebrow">Open source</p>
+    <h1>Print on<br>my desk</h1>
+    <p class="sub">Write a message. It comes out on real paper.</p>
+    <p class="meta" id="meta">384 dots &middot; 203 dpi</p>
+  </div>
+  <div class="strip">
+    <canvas id="cv"></canvas>
+    <div class="tear"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { renderTicket } from "/lib/render.js";
+  import { CURRENT_PROFILE, profileFor } from "/lib/profiles.js";
+  import ATLAS from "/lib/font-atlas.js";
+
+  const rendered = renderTicket(
+    "Somebody you have never met typed this, and a machine in a flat printed it.",
+    { id: 410, createdAt: Date.parse("2026-09-02T21:47:00Z"), profile: profileFor(CURRENT_PROFILE) }
+  );
+  const cv = document.getElementById("cv");
+  cv.width = rendered.widthPixels;
+  cv.height = Math.max(rendered.height, 1);
+  const ctx = cv.getContext("2d");
+  const img = ctx.createImageData(cv.width, cv.height);
+  for (let y = 0; y < cv.height; y++) {
+    const row = rendered.rows[y];
+    for (let x = 0; x < cv.width; x++) {
+      const on = row && row[x >> 3] & (1 << (x & 7));
+      const i = (y * cv.width + x) * 4;
+      const v = on ? [20, 20, 15] : [244, 243, 238];
+      img.data[i] = v[0]; img.data[i + 1] = v[1]; img.data[i + 2] = v[2]; img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  // The card says which font it was built with, so a card that has drifted
+  // from the site is visible rather than merely wrong.
+  document.getElementById("meta").textContent =
+    `384 dots · 203 dpi · ${ATLAS.name}`;
+  document.documentElement.dataset.ready = "1";
+</script>

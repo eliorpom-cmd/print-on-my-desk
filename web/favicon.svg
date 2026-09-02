@@ -1,7 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" fill="#14130f"/>
-  <rect x="6" y="9" width="20" height="3" fill="#f4f1ea"/>
-  <rect x="9" y="14" width="14" height="12" fill="#f4f1ea"/>
-  <rect x="11" y="17" width="10" height="1.6" fill="#14130f"/>
-  <rect x="11" y="20" width="7" height="1.6" fill="#14130f"/>
+  <!-- A slot with paper coming out of it. Two shapes, because at 16 px on a
+       browser tab anything else is mud. It follows the reader's theme rather
+       than picking a side. -->
+  <style>
+    .ink { fill: #14140f; }
+    .stock { fill: #f4f3ee; }
+    @media (prefers-color-scheme: dark) {
+      .ink { fill: #e9e9e6; }
+      .stock { fill: #0e0f11; }
+    }
+  </style>
+  <rect class="stock" width="32" height="32"/>
+  <rect class="ink" x="4" y="8" width="24" height="3" rx="1.5"/>
+  <path class="ink" d="M7 14h18v13l-3-2-3 2-3-2-3 2-3-2-3 2z"/>
+  <rect class="stock" x="10" y="18" width="12" height="2"/>
+  <rect class="stock" x="10" y="22" width="8" height="2"/>
 </svg>

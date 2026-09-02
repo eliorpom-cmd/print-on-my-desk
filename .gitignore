@@ -23,3 +23,12 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Source fonts: fetched by tools/build_font.py, never committed.
+#
+# The three presets are all under the SIL Open Font License, so redistributing
+# them is allowed - but only WITH their licence text, which this repository
+# does not carry. Rather than ship a font without its paperwork, build_font.py
+# downloads the one you ask for and tells you where from. What IS committed is
+# the atlas it produces: bitmaps of the glyphs you use, not the outlines.
+tools/fonts/
