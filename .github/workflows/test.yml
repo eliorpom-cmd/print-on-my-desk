@@ -52,6 +52,13 @@ jobs:
         run: |
           python3 test_loop.py
           python3 test_escpos_printer.py
+          # The Bluetooth driver's own suite, 59 assertions, and it was missing
+          # from here until somebody counted. ble_printer.py imports bleak
+          # inside a try/except precisely so this runs on a machine with no
+          # radio, which is the only reason it could be forgotten: it passed
+          # locally for anybody who thought to run it, and was enforced for
+          # nobody.
+          python3 test_ble_printer.py
 
       - name: firmware
         working-directory: firmware

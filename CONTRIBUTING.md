@@ -10,12 +10,25 @@ welcome, and the last one most of all.
 ## Before you open a pull request
 
 ```sh
-cd worker && npm test
-python3 agent/test_loop.py
-python3 firmware/test_loop.py
+cd worker && npm test          # the Worker, the page, the renderer
+cd ..
+python3 agent/test_loop.py           # the always-on agent's loop
+python3 agent/test_escpos_printer.py # the USB driver, byte by byte
+python3 agent/test_ble_printer.py    # the Bluetooth driver
+python3 firmware/test_loop.py        # the Pico's loop
+python3 firmware/test_ble_printer.py # the Pico against captured traces
+node tools/sync_web.mjs --check      # the page's copy of the renderer
 ```
 
-All three run without hardware.
+All of them run without hardware. That is the property worth protecting: you
+can break something and know it with no printer on your desk.
+
+This list is what CI runs, and it used to be shorter than what CI runs — three
+of these were enforced on every pull request and mentioned nowhere, so it was
+possible to pass everything this page asked for and still go red. The last one
+is the usual way that happened: `web/lib` is a copy of the Worker's renderer,
+and a copy that has drifted is a preview that lies about what the paper will
+say.
 
 ## How this codebase is written
 
