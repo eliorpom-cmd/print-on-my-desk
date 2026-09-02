@@ -218,7 +218,7 @@ def first_answer_latency(printer, rounds=4):
     if delays:
         print()
         print(
-            "  reponse la plus lente : %.0f ms  (attente accordee : %d ms)"
+            "  slowest answer: %.0f ms  (wait allowed: %d ms)"
             % (max(delays) * 1000, 1500)
         )
         if max(delays) > 1.0:

@@ -472,20 +472,20 @@ def reset_world():
 
 # --- Tests ----------------------------------------------------------------
 
-print("\nConstante de securite")
-check("la deadline BLE est sous les 9 minutes", main.BLE_DEADLINE_MS < 9 * 60 * 1000, True)
+print("\nSafety constants")
+check("the BLE deadline is under 9 minutes", main.BLE_DEADLINE_MS < 9 * 60 * 1000, True)
 # The acceptance run lost the printer at 7.8 minutes, so the old 9-minute
 # figure is not something to design against any more.
-check("la deadline BLE est sous les 7 minutes", main.BLE_DEADLINE_MS < 7 * 60 * 1000, True)
-check("le keepalive est plus frequent que la deadline", main.KEEPALIVE_DUE_MS < main.BLE_DEADLINE_MS, True)
+check("the BLE deadline is under 7 minutes", main.BLE_DEADLINE_MS < 7 * 60 * 1000, True)
+check("the keepalive is more frequent than the deadline", main.KEEPALIVE_DUE_MS < main.BLE_DEADLINE_MS, True)
 
-print("\nCycle nominal, rien a imprimer")
+print("\nNominal cycle, nothing to print")
 reset_world()
 service = main.Service()
 asyncio.run(run_for(service, 4))
-check("aucune violation de la contrainte 6", radio.violations, [])
-check("le WiFi est coupe a la fin", radio.wifi, False)
-check("le BLE est coupe a la fin", radio.ble, False)
+check("no breach of constraint 6", radio.violations, [])
+check("the WiFi is off at the end", radio.wifi, False)
+check("the BLE is off at the end", radio.ble, False)
 check_true("des heartbeats ont ete envoyes", len(api.heartbeats) >= 3)
 gaps = [b - a for a, b in zip(radio.contacts, radio.contacts[1:])]
 check_true("des contacts BLE reguliers", len(radio.contacts) >= 4)
@@ -500,7 +500,7 @@ check(
     True,
 )
 
-print("\nLa nuit: WiFi coupe, imprimante seule")
+print("\nOvernight: WiFi off, printer alone")
 reset_world()
 fake_net.wifi_available = False
 service = main.Service()
@@ -508,35 +508,35 @@ service = main.Service()
 # count has to be large enough that this still covers a real stretch of night
 # after the 30 August retuning shortened the cycle to ~90 s.
 asyncio.run(run_for(service, 40))
-check("aucune violation de la contrainte 6", radio.violations, [])
+check("no breach of constraint 6", radio.violations, [])
 gaps = [b - a for a, b in zip(radio.contacts, radio.contacts[1:])]
-check_true("l'imprimante reste touchee malgre l'absence de reseau", len(radio.contacts) >= 10)
+check_true("the printer is kept in touch with despite the network being gone", len(radio.contacts) >= 10)
 check(
-    "le cycle de nuit tient l'intervalle voulu",
+    "the overnight cycle keeps the interval it should",
     max(gaps) <= main.KEEPALIVE_DUE_MS + 60000 if gaps else True,
     True,
 )
 # The point is that the night run covers a long stretch, not that it covers a
 # particular number of cycles: half an hour is already several times the window
 # in which the printer has ever been observed to disappear.
-check_true("une longue periode simulee s'est ecoulee", NOW[0] > 30 * 60 * 1000)
-check_true("le WiFi a bien ete retente regulierement", fake_net.wifi_attempts >= 10)
+check_true("a long simulated stretch has gone by", NOW[0] > 30 * 60 * 1000)
+check_true("the WiFi was retried regularly", fake_net.wifi_attempts >= 10)
 
-print("\nImpression d'un job")
+print("\nPrinting one job")
 reset_world()
 job = make_job(101)
 api.queue.append(job)
 service = main.Service()
 asyncio.run(run_for(service, 3))
-check("aucune violation de la contrainte 6", radio.violations, [])
-check("le ticket a ete imprime", len(printer.prints), 1)
-check("le bon nombre de lignes", printer.prints[0]["lines"], 32)
+check("no breach of constraint 6", radio.violations, [])
+check("the ticket was printed", len(printer.prints), 1)
+check("the right number of lines", printer.prints[0]["lines"], 32)
 check("l'avance papier a ete demandee", printer.feeds, [80])
 check("le job a ete confirme", [d["id"] for d in api.done_calls], [101])
 check("confirme comme reussi", api.done_calls[0]["ok"], True)
-check("le CRC est remonte au Worker", api.done_calls[0]["crc"], job["crc"])
+check("the CRC is reported back to the Worker", api.done_calls[0]["crc"], job["crc"])
 
-print("\nDeux jobs a la suite: une seule bande")
+print("\nTwo jobs in a row: one single strip")
 # The whole point of batching. Two tickets used to mean two prints and two of
 # the printer's end-of-print eject margins; they now share one strip and cost
 # one. A backlog of nineteen emptied the roll on 30 August doing it the old way.
@@ -544,15 +544,15 @@ reset_world()
 api.queue.extend([make_job(1), make_job(2)])
 service = main.Service()
 asyncio.run(run_for(service, 3))
-check("une seule impression pour deux tickets", len(printer.prints), 1)
-check("les deux ont voyage sur la meme bande", api.batches, [[1, 2]])
-check("la bande porte les lignes des deux", printer.prints[0]["lines"], 64)
-check("un seul aller-retour de confirmation", len(api.done_calls), 1)
-check("les deux sont confirmes", api.done_calls[0]["ids"], [1, 2])
+check("one print for two tickets", len(printer.prints), 1)
+check("both travelled on the same strip", api.batches, [[1, 2]])
+check("the strip carries the lines of both", printer.prints[0]["lines"], 64)
+check("one confirmation round trip", len(api.done_calls), 1)
+check("both are confirmed", api.done_calls[0]["ids"], [1, 2])
 check("confirme comme reussi", api.done_calls[0]["ok"], True)
-check("aucune violation de la contrainte 6", radio.violations, [])
+check("no breach of constraint 6", radio.violations, [])
 
-print("\nUn lot rate: tous les tickets de la bande echouent ensemble")
+print("\nA failed batch: every ticket on the strip fails together")
 # A strip is printed or lost as a whole. Reporting only its first ticket would
 # leave the rest claimed until their lease expired, and the Worker would fail
 # them with no explanation.
@@ -562,11 +562,11 @@ printer.crc_override = 0x99  # the strip arrives corrupted
 service = main.Service()
 asyncio.run(run_for(service, 3))
 printer.crc_override = None
-check("les trois sont rapportes ensemble", api.done_calls[0]["ids"], [31, 32, 33])
+check("all three are reported together", api.done_calls[0]["ids"], [31, 32, 33])
 check("rapportes comme echoues", api.done_calls[0]["ok"], False)
-check_true("un CRC divergent ne se rejoue pas", api.done_calls[0]["retry"] is False)
+check_true("a diverging CRC is not replayed", api.done_calls[0]["retry"] is False)
 
-print("\nLa tete chaude fait attendre la boucle au lieu de bruler les essais")
+print("\nA hot head makes the loop wait rather than burn its attempts")
 # Three refusals in 45 seconds killed tickets 173 and 174 on 30 August: the job
 # went back in the queue, was claimed again seconds later, and the head was
 # still at 39 C. The loop must now wait for the temperature to come down.
@@ -577,14 +577,14 @@ printer.cools = True
 service = main.Service()
 asyncio.run(run_for(service, 3))
 check("l'etat passe en refroidissement", service.printer_state, "cooling")
-check_true("une seule tentative, pas trois", len(api.done_calls) == 1)
-check_true("et elle demande le rejeu", api.done_calls[0]["retry"] is True)
-check_true("rien n'a ete imprime", len(printer.prints) == 0)
+check_true("one attempt, not three", len(api.done_calls) == 1)
+check_true("and it asks to be replayed", api.done_calls[0]["retry"] is True)
+check_true("nothing was printed", len(printer.prints) == 0)
 # The Worker put the ticket back, and the loop left it alone while cooling.
-check_true("le ticket est retourne en file", len(api.queue) == 1)
-check_true("et il n'a pas ete rereclame", len(api.done_calls) == 1)
+check_true("the ticket went back in the queue", len(api.queue) == 1)
+check_true("and it was not re-claimed", len(api.done_calls) == 1)
 
-print("\nUne fois refroidie, la boucle repart seule")
+print("\nOnce cooled, the loop restarts on its own")
 # Same run, the head simply cools as the keepalives read it.
 reset_world()
 api.queue.append(make_job(52))
@@ -593,9 +593,9 @@ printer.cools = True
 service = main.Service()
 asyncio.run(run_for(service, 16))
 check("l'etat est revenu a awake", service.printer_state, "awake")
-check_true("et le ticket a fini par sortir", len(printer.prints) >= 1)
+check_true("and the ticket came out in the end", len(printer.prints) >= 1)
 
-print("\nUne bande refusee avant le premier octet se rejoue")
+print("\nA strip refused before its first byte is replayed")
 # The head was too hot, the roll was empty, or the printer was asleep. In all
 # three the Pico refuses before sending anything, so nothing is on the floor
 # and the whole strip belongs back in the queue. Marking these final failed
@@ -612,43 +612,43 @@ for failure, label in (
     service = main.Service()
     asyncio.run(run_for(service, 3))
     check_true(
-        "bande %s: rejeu demande" % label,
+        "strip %s: replay asked for" % label,
         api.done_calls and api.done_calls[0]["retry"] is True,
     )
     check_true(
-        "bande %s: les deux ids sont rendus" % label,
+        "strip %s: both ids are given back" % label,
         api.done_calls and api.done_calls[0]["ids"] == [41, 42],
     )
 
-print("\nCRC divergent du Worker")
+print("\nA CRC that differs from the Worker's")
 reset_world()
 api.queue.append(make_job(7))
 printer.crc_override = 0x99  # not what the Worker announced
 service = main.Service()
 asyncio.run(run_for(service, 3))
-check("le job est signale en echec", api.done_calls[0]["ok"], False)
-check_true("le motif mentionne le CRC", "crc" in (api.done_calls[0]["error"] or "").lower())
+check("the job is reported as failed", api.done_calls[0]["ok"], False)
+check_true("the reason mentions the CRC", "crc" in (api.done_calls[0]["error"] or "").lower())
 printer.crc_override = None
 
-print("\nImprimante endormie: le message doit survivre")
+print("\nPrinter asleep: the message must survive")
 reset_world()
 printer.asleep = True
 api.queue.append(make_job(55))
 service = main.Service()
 asyncio.run(run_for(service, 4))
-check("aucun ticket n'a ete imprime", printer.prints, [])
-check("le job n'est pas reclame, donc pas brule", api.done_calls, [])
-check("il attend toujours dans la file", [j["id"] for j in api.queue], [55])
-check_true("le Pico continue de parler au Worker", len(api.heartbeats) >= 2)
+check("no ticket was printed", printer.prints, [])
+check("the job is not claimed, so not burned", api.done_calls, [])
+check("it is still waiting in the queue", [j["id"] for j in api.queue], [55])
+check_true("the Pico goes on talking to the Worker", len(api.heartbeats) >= 2)
 states = [h["printer_state"] for h in api.heartbeats]
-check_true("le heartbeat signale l'imprimante endormie", "asleep" in states)
-check("aucune violation de la contrainte 6", radio.violations, [])
+check_true("the heartbeat reports the printer asleep", "asleep" in states)
+check("no breach of constraint 6", radio.violations, [])
 check_true(
-    "l'imprimante est retentee souvent, pour repartir vite apres le bouton",
+    "the printer is retried often, to restart quickly after the button",
     NOW[0] / max(1, radio.ble_sessions) < 2 * 60 * 1000,
 )
 
-print("\nQuelqu'un appuie sur le bouton")
+print("\nSomebody presses the button")
 reset_world()
 printer.asleep = True
 api.queue.append(make_job(56))
@@ -676,12 +676,12 @@ async def wake_up_scenario():
 
 
 asyncio.run(wake_up_scenario())
-check("le message en attente finit par sortir", len(printer.prints), 1)
-check("et il est confirme", [d["id"] for d in api.done_calls], [56])
-check("aucune violation de la contrainte 6", radio.violations, [])
+check("the waiting message comes out in the end", len(printer.prints), 1)
+check("and it is confirmed", [d["id"] for d in api.done_calls], [56])
+check("no breach of constraint 6", radio.violations, [])
 printer.asleep = False
 
-print("\nReseau perdu entre l'impression et la confirmation")
+print("\nNetwork lost between the print and the confirmation")
 reset_world()
 api.queue.append(make_job(77))
 service = main.Service()
@@ -712,35 +712,35 @@ async def scenario():
 
 
 asyncio.run(scenario())
-check("le ticket est bien sorti", len(printer.prints), 1)
-check("la confirmation a fini par passer", [d["id"] for d in api.done_calls], [77])
-check("aucune violation de la contrainte 6", radio.violations, [])
+check("the ticket did come out", len(printer.prints), 1)
+check("the confirmation got through in the end", [d["id"] for d in api.done_calls], [77])
+check("no breach of constraint 6", radio.violations, [])
 
-print("\nBoutique fermee")
+print("\nShop shut")
 reset_world()
 api.open = False
 api.poll_after = 300
 api.queue.append(make_job(9))
 service = main.Service()
 asyncio.run(run_for(service, 4))
-check("rien n'est imprime hors horaires", printer.prints, [])
-check_true("l'imprimante est quand meme maintenue eveillee", len(radio.contacts) >= 3)
+check("nothing is printed outside opening hours", printer.prints, [])
+check_true("the printer is kept awake anyway", len(radio.contacts) >= 3)
 gaps = [b - a for a, b in zip(radio.contacts, radio.contacts[1:])]
 check(
-    "l'intervalle est tenu meme boutique fermee",
+    "the interval holds even with the shop shut",
     max(gaps) <= main.KEEPALIVE_DUE_MS + 60000 if gaps else True,
     True,
 )
 api.open = True
 
-print("\nConflit radio: on redemarre plutot que de continuer")
+print("\nRadio conflict: restart rather than carry on")
 reset_world()
 service = main.Service()
 original_wifi_up = fake_net.wifi_up
 
 
 def conflicting(*a, **k):
-    raise fake_net.RadioConflict("les deux radios sont allumees")
+    raise fake_net.RadioConflict("both radios are on")
 
 
 fake_net.wifi_up = conflicting
@@ -757,7 +757,7 @@ if FAILURES:
     sys.exit(1)
 print("tout passe")
 
-print("\nLe thermostat vient du Worker, pas du firmware")
+print("\nThe thermostat comes from the Worker, not the firmware")
 # The two thresholds used to be frozen into the board, so retuning them meant
 # reflashing mid-queue and risking the strip in flight. They now arrive with
 # every heartbeat.
@@ -768,11 +768,11 @@ api.queue.append(make_job(61))
 printer.temperature = 40          # too hot at 38, fine at 41
 service = main.Service()
 asyncio.run(run_for(service, 3))
-check("le plafond du Worker est adopte", service.head_max_c, 41)
-check("le seuil de reprise aussi", service.cool_to_c, 37)
+check("the Worker's ceiling is adopted", service.head_max_c, 41)
+check("and so is the resume threshold", service.cool_to_c, 37)
 check_true("et le ticket sort a 40 C", len(printer.prints) >= 1)
 
-print("\nUn reglage aberrant ne peut pas cuire la tete")
+print("\nAn absurd setting cannot cook the head")
 reset_world()
 api.head_max_c = 90               # far past the driver's hard ceiling
 api.cool_to_c = 34
@@ -780,8 +780,8 @@ api.queue.append(make_job(62))
 printer.temperature = 44
 service = main.Service()
 asyncio.run(run_for(service, 3))
-check("le plafond absurde est ignore", service.head_max_c, 38)
-check_true("et rien n'a ete imprime a 44 C", len(printer.prints) == 0)
+check("the absurd ceiling is ignored", service.head_max_c, 38)
+check_true("and nothing was printed at 44 C", len(printer.prints) == 0)
 
 if FAILURES:
     print(f"\n{len(FAILURES)} echec(s): {', '.join(FAILURES)}")

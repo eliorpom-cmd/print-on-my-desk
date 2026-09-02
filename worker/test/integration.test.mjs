@@ -223,7 +223,7 @@ test("a percent sign in the query does not match everything", async () => {
   const db = makeDb();
   db.seed([
     { id: 1, text: "100% sur", status: "printed" },
-    { id: 2, text: "rien a voir", status: "printed" },
+    { id: 2, text: "nothing to see", status: "printed" },
   ]);
   const found = await searchJobs(db, { q: "100%" });
   assert.deepEqual(found.rows.map((r) => r.id), [1]);

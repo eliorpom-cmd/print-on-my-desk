@@ -47,6 +47,8 @@
   --stock-ink: #14140f;
 
   /* No web fonts, on purpose - see the note above. */
+  /* #public-allow-french a CSS font stack, not prose: "la" and "de" are
+     inside system-ui and -apple-system. */
   --display: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --body: var(--display);
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

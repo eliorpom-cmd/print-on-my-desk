@@ -326,8 +326,14 @@ export function screen(text) {
  * Is this occurrence innocent because of the word next to it?
  *
  * Only used where one language's slur is another language's ordinary noun.
- * The exemption is per occurrence, not per message: "j'ai du retard, espece de
- * retard" still trips on the second one.
+ * The list that ships has a French pair, because that is where this was first
+ * needed: "retard" is a slur on its own and an everyday word for lateness, so
+ * the term carries the words that make it innocent next to it.
+ *
+ * The exemption is per occurrence, not per message. In "j'ai du retard, espece
+ * de retard" - "I am running late, you retard" - the first is excused by the
+ * word before it and the second still trips. One innocent use in a sentence
+ * does not buy a licence for the rest of it.
  */
 function exempted(term, tokens, index) {
   const before = tokens[index - 1];

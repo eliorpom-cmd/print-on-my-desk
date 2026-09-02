@@ -125,6 +125,8 @@ test("a ticket ends on its stated margin and not a row more", () => {
   // away and made the height depend on whether the first line happened to
   // carry an accent. The property worth keeping is that the waste is stated
   // rather than accidental.
+  // #public-allow-french the fixtures ARE the subject: accented and French
+  // text is what this asserts survives folding and wrapping.
   for (const text of ["Bonjour", "Le petit chat", "Ete a Paris, deja", "!"]) {
     const canvas = renderTicket(text, { id: 1, createdAt: 0 });
     const blank = (row) => row.every((byte) => byte === 0);
@@ -230,7 +232,7 @@ test("wrap hard-splits a word longer than the line", () => {
 });
 
 test("wrap keeps paragraph breaks", () => {
-  assert.deepEqual(wrap("un\ndeux", 10), ["un", "deux"]);
+  assert.deepEqual(wrap("one\ntwo", 10), ["one", "two"]);
 });
 
 test("wrap drops trailing blank lines so they do not cost paper", () => {

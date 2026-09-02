@@ -24,6 +24,8 @@ test("plain text passes, and nothing is clever about it", () => {
   for (const ok of [
     "Hello from Berlin!",
     "Happy birthday, I hope the printer is warm.",
+    // #public-allow-french a message in another language must not trip the
+    // filter; that is the assertion.
     "Ceci est un message parfaitement normal.",
   ]) {
     assert.equal(sev(ok), null, ok);

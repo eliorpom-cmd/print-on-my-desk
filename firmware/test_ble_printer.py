@@ -68,16 +68,16 @@ def skip_without_traces(what):
     if HAVE_TRACES:
         return False
     print(f"\n{what}")
-    print(f"  -    ignore : pas de captures dans {TRACES.relative_to(ROOT)}")
-    print("       (le banc d'essai ne fait pas partie de l'edition publique)")
+    print(f"  -    skipped: no captures in {TRACES.relative_to(ROOT)}")
+    print("       (the capture bench is not part of the public edition)")
     return True
 
 
 def test_frames_match_captures():
     """Every control frame ever sent must be rebuildable byte for byte."""
-    if skip_without_traces("Trames de controle rejouees depuis les captures"):
+    if skip_without_traces("Control frames replayed from the captures"):
         return
-    print("\nTrames de controle rejouees depuis les captures")
+    print("\nControl frames replayed from the captures")
     seen = 0
     for trace in ["a", "b", "c", "d", "e", "f"]:
         _, events = load(trace)
@@ -99,7 +99,7 @@ def test_notifications_parse():
     """The 6+n+1 layout must hold for every notification we ever received."""
     if skip_without_traces("Decodage des notifications capturees"):
         return
-    print("\nDecodage des notifications capturees")
+    print("\nDecoding the captured notifications")
     total = 0
     for trace in ["a", "b", "c", "d", "e", "f"]:
         _, events = load(trace)
@@ -119,7 +119,7 @@ def test_notifications_parse():
             if raw[-1] != 0x00:
                 check(f"{trace}: octet de queue", hex(raw[-1]), "0x00")
                 return
-    print(f"  {total} notifications decodees, toutes en 6+n+1 avec queue nulle")
+    print(f"  {total} notifications decoded, all 6+n+1 with a zero tail")
 
 
 def image_buffer(trace):
@@ -133,9 +133,9 @@ def image_buffer(trace):
 
 def test_patterns_match_captures():
     """The hardcoded bitmaps must equal the ones the Mac actually sent."""
-    if skip_without_traces("Bitmaps du firmware compares aux tampons captures"):
+    if skip_without_traces("Firmware bitmaps against the captured buffers"):
         return
-    print("\nBitmaps du firmware compares aux tampons captures")
+    print("\nFirmware bitmaps against the captured buffers")
     cases = [
         ("noir plein", "c", fw.pattern_solid_black, fw.EXPECTED_CRC_BLACK),
         ("damier 8x8", "e", fw.pattern_checkerboard, fw.EXPECTED_CRC_CHECKER),
@@ -144,15 +144,15 @@ def test_patterns_match_captures():
         captured = image_buffer(trace)
         generated = b"".join(bytes(line) for line in pattern())
         check(f"{label}: taille", len(generated), len(captured))
-        check(f"{label}: octets identiques a la trace {trace}", generated, captured)
+        check(f"{label}: bytes identical to trace {trace}", generated, captured)
         check(f"{label}: CRC8", fw.crc8(generated), expected_crc)
 
 
 def test_crc_matches_printer_report():
     """The CRC we compute must equal the one the printer echoed in AA."""
-    if skip_without_traces("CRC calcule par le firmware contre celui renvoye par l'imprimante"):
+    if skip_without_traces("CRC computed by the firmware against the one the printer returns"):
         return
-    print("\nCRC calcule par le firmware contre celui renvoye par l'imprimante")
+    print("\nCRC computed by the firmware against the one the printer returns")
     for trace in ["c", "d", "e", "f"]:
         _, events = load(trace)
         aa = next(
@@ -166,17 +166,17 @@ def test_streaming_crc():
     """Incremental CRC over a stream must equal the one-shot CRC."""
     if skip_without_traces("CRC calcule en flux, contre un tampon capture"):
         return
-    print("\nCRC incremental en streaming")
+    print("\nIncremental CRC, streamed")
     buffer = image_buffer("f")
     running = 0
     for offset in range(0, len(buffer), fw.WIDTH_BYTES):
         running = fw.crc8(buffer[offset : offset + fw.WIDTH_BYTES], running)
-    check("ligne par ligne == d'un bloc", running, fw.crc8(buffer))
+    check("line by line == in one block", running, fw.crc8(buffer))
 
 
 def test_intensity_cap():
-    print("\nPlafond d'intensite")
-    check("0xC0 est la limite du projet", fw.MAX_INTENSITY, 0xC0)
+    print("\nIntensity ceiling")
+    check("0xC0 is the project ceiling", fw.MAX_INTENSITY, 0xC0)
 
 
 class _FakeResult:
@@ -241,11 +241,11 @@ def test_scan_counts_peers():
     asleep, or the Pico's shared CYW43 radio may simply not be scanning after
     a WiFi/BLE toggle. Counting the other advertisers settles it.
     """
-    print("\nComptage des pairs pendant le scan")
+    print("\nCounting peers during the scan")
 
     others = [_FakeResult("aa:01", name="Casque"), _FakeResult("aa:02", name="TV")]
     printer, found = _scan_with(others)
-    check("imprimante absente, 2 autres pairs vus", (found, printer.last_scan_peers),
+    check("printer absent, 2 other peers seen", (found, printer.last_scan_peers),
           (None, 2))
 
     printer, found = _scan_with([])
@@ -253,17 +253,17 @@ def test_scan_counts_peers():
 
     with_printer = others + [_FakeResult("bb:01", name=fw.DEVICE_NAME)]
     printer, found = _scan_with(with_printer)
-    check("imprimante trouvee par son nom", found, "bb:01")
-    check("les pairs precedents sont comptes", printer.last_scan_peers, 3)
+    check("printer found by its name", found, "bb:01")
+    check("the preceding peers are counted", printer.last_scan_peers, 3)
 
     # The same peer advertising repeatedly must count once, or the number
     # stops meaning "how busy is the air around the Pico".
     printer, _ = _scan_with([_FakeResult("aa:01", name="Casque")] * 5)
-    check("un pair repete ne compte qu'une fois", printer.last_scan_peers, 1)
+    check("a repeated peer counts once", printer.last_scan_peers, 1)
 
 
 def test_asleep_message_carries_peers():
-    print("\nMessage de PrinterAsleep")
+    print("\nThe PrinterAsleep message")
     import asyncio
 
     _aioble.scan = lambda *a, **kw: _FakeScanner(
@@ -274,7 +274,7 @@ def test_asleep_message_carries_peers():
         asyncio.run(printer.connect(scan_ms=1))
         check("connect leve PrinterAsleep", False, True)
     except fw.PrinterAsleep as exc:
-        check("le nombre de pairs est dans le message", "2 other peers" in str(exc), True)
+        check("the peer count is in the message", "2 other peers" in str(exc), True)
 
 
 def test_paper_is_checked_before_the_error_flag():
@@ -285,18 +285,18 @@ def test_paper_is_checked_before_the_error_flag():
     interpret, never entered its no-paper state, and spun on the printer every
     nineteen seconds. Confirmed on 30 August.
     """
-    print("\nOrdre des controles avant impression")
+    print("\nOrder of the checks before printing")
     import inspect
 
     source = inspect.getsource(fw.MXW01.print_lines)
     paper_at = source.index('status["paper_ok"]')
     flag_at = source.index('status["error_flag"] != 0')
-    check("le papier est teste avant le drapeau d'erreur", paper_at < flag_at, True)
+    check("paper is tested before the error flag", paper_at < flag_at, True)
 
     # And the frame travels with an unknown flag, or nobody will ever name it.
     tail = source[flag_at:]
     check_true = tail.find('status["raw"]') != -1
-    check("la trame complete accompagne un drapeau inconnu", check_true, True)
+    check("the full frame accompanies an unknown flag", check_true, True)
 
 
 if __name__ == "__main__":
@@ -314,9 +314,9 @@ if __name__ == "__main__":
         print(f"{len(FAILURES)} echec(s): {', '.join(FAILURES)}")
         sys.exit(1)
     if HAVE_TRACES:
-        print("Tout est conforme aux captures M0.")
+        print("Everything agrees with the M0 captures.")
     else:
         # Not the same claim, and it must not read like it. Five tests replay
         # the M0 captures and they did not run; what passed here is the logic
         # that needs no bench - the framing, the caps, the order of the checks.
-        print("Verifie sans le banc d'essai : les rejeux de captures ont ete ignores.")
+        print("Checked without the bench: the capture replays were skipped.")

@@ -73,7 +73,7 @@ def sweep(printer, label):
                 pass
             continue
         if answer is None:
-            print("  DLE EOT %d  %-18s pas de reponse" % (n, name))
+            print("  DLE EOT %d  %-18s no answer" % (n, name))
             continue
         print(
             "  DLE EOT %d  %-18s 0x%02X  %s   (spec: %s)"
