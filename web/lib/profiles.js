@@ -141,7 +141,7 @@ export const PROFILES = { mxw01: MXW01, trp100: TRP100 };
 export const DEFAULT_PROFILE = "mxw01";
 
 /** The profile the new machine uses, for tools and previews that must pick one. */
-export const CURRENT_PROFILE = "trp100";
+export const CURRENT_PROFILE = "mxw01";
 
 /** Resolves a profile id, falling back rather than throwing on junk input. */
 export function profileFor(id) {

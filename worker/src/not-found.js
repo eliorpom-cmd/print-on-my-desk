@@ -3,6 +3,14 @@
 //
 // It borrows the front page's stylesheet rather than carrying a second copy of
 // the palette, so it cannot drift out of step with the site it belongs to.
+//
+// That is also why it declares no `color-scheme` of its own and preloads no
+// fonts. Both used to be here and both were edition-specific: the meta said
+// `light`, which is this deployment and not the open-source one, and the two
+// preloads named font files the open-source edition does not ship - so its 404
+// page asked the browser for two things that answered 404. The stylesheet
+// already sets `color-scheme` on :root, and preloading a webfont on an error
+// page was optimising the one page nobody waits on.
 
 export const NOT_FOUND_PAGE = String.raw`<!doctype html>
 <html lang="en">
@@ -10,11 +18,8 @@ export const NOT_FOUND_PAGE = String.raw`<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<meta name="color-scheme" content="light">
 <title>Nothing here · Print on my desk</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="/fonts/doto-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/fonts/kode-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/style.css">
 <style nonce="__CSP_NONCE__">
   main { display: flex; flex-direction: column; justify-content: center; min-height: 70vh; }

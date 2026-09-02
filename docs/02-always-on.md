@@ -45,14 +45,26 @@ press the button in the morning. The USB printer has no such behaviour.
 ## 2 · Set up the machine
 
 On a fresh Raspberry Pi: install Raspberry Pi OS Lite (64-bit) with the
-Raspberry Pi Imager, and in the Imager's settings screen turn on SSH and fill
-in your WiFi. That saves you a screen and a keyboard.
+Raspberry Pi Imager. In the Imager's settings screen, set a **hostname**, set a
+**username and password**, turn on **SSH**, and fill in your WiFi. That saves
+you a screen and a keyboard.
 
-Then, from your own computer:
+Write the username and hostname down. There is no default `pi` user any more —
+Raspberry Pi OS stopped shipping one in 2022 — so the address to connect to is
+the two things you just chose:
 
 ```sh
-ssh pi@raspberrypi.local
+ssh YOUR-USERNAME@YOUR-HOSTNAME.local
 ```
+
+If the name does not resolve, give it another two minutes: the first boot
+resizes the disk and joins the WiFi before it answers to anything. After that,
+look in your router for the address it took and use that instead.
+
+> **A Pi 3 Model B has no 5 GHz radio.** If your router broadcasts both bands
+> under different names, give the Imager the 2.4 GHz one. With the other, every
+> single thing looks right — the card is written, the Pi boots, the lights
+> blink — and it searches for a network it cannot hear, forever, saying nothing.
 
 ## 3 · Install
 
@@ -62,9 +74,13 @@ cd print-on-my-desk
 bash agent/install.sh
 ```
 
-It asks four things — your Worker's address, your `PRINTER_TOKEN`, and a name
-for this machine — and does everything else. It is safe to run again if a step
-fails.
+It asks four things — **which printer you have** (USB or Bluetooth), your
+Worker's address, your `PRINTER_TOKEN`, and a name for this machine — and does
+everything else. It is safe to run again if a step fails.
+
+The name matters if you ever run two of these: the Worker keeps one row per
+device, so two machines sharing a name overwrite each other's status and
+neither is wrong enough to notice.
 
 The one part it cannot do for you is the USB permission rule, because it needs
 your printer's ids. It prints `lsusb` output and tells you exactly what to

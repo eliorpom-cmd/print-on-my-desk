@@ -23,6 +23,7 @@ Output:
 
 import argparse
 import json
+import subprocess
 import sys
 import unicodedata
 from pathlib import Path
@@ -370,6 +371,29 @@ def main():
 
     print("  ecrit    : %s (%.1f Ko)" % (js_path.relative_to(ROOT), js_path.stat().st_size / 1024))
     print("             %s (%.1f Ko)" % (json_path.relative_to(ROOT), json_path.stat().st_size / 1024))
+
+    # And then the copy the BROWSER reads, which is neither of the two above.
+    #
+    # This step used to be the reader's job and nothing said so. The page
+    # imports web/lib/font-atlas.js, made by tools/sync_web.mjs from the
+    # worker/src copy - so rebuilding the font and deploying, which is exactly
+    # what docs/05 told you to do, left the site previewing the OLD font while
+    # the Worker printed the new one. The test suite catches it, but only if
+    # you run the tests, and nothing told you to.
+    #
+    # The two must agree or the preview is a lie, so the script that breaks
+    # them is the script that puts them back.
+    sync = ROOT / "tools" / "sync_web.mjs"
+    if sync.exists():
+        try:
+            subprocess.run(["node", str(sync)], cwd=ROOT, check=True,
+                           stdout=subprocess.DEVNULL)
+            print("             web/lib/font-atlas.js (par tools/sync_web.mjs)")
+        except (OSError, subprocess.CalledProcessError) as err:
+            print()
+            print("  ATTENTION: la copie du navigateur n'a pas ete regeneree (%s)." % err)
+            print("             L'apercu montrerait encore l'ancienne police.")
+            print("             Lance :  node tools/sync_web.mjs")
 
     if args.preview:
         print()

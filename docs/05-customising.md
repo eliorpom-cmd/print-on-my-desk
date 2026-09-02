@@ -24,9 +24,21 @@ never contradict the actual setting.
 
 ## The look — 20 minutes
 
-`web/style.css`. Four colours and two fonts at the top, in `:root`. Change
-those and it is a different site. There is a dark-mode block underneath doing
-the same four colours.
+`web/style.css`, in `:root`. Change the tokens there and it is a different
+site. The site is dark, and there is no light-mode block to keep in step: one
+palette, one place.
+
+Two of those tokens are not interchangeable, and the comment in the file says
+so. `--paper` and `--ink` are the **page's** background and text — `/admin`
+borrows this stylesheet and paints itself with them, so swapping their meaning
+makes the desk unreadable. The physical roll is `--stock`, and it stays light
+in every theme, because paper does.
+
+**There are no web fonts to change**, and that is the one deliberate part of
+the design. The page has no typeface of its own for a message: what somebody
+types is drawn with the printer's own atlas, so the preview IS the ticket
+rather than a picture of one. The interface uses the reader's system font. If
+you want the page to look different, the next section is where that happens.
 
 No build step, no framework. Edit, reload, deploy.
 
@@ -36,14 +48,34 @@ The printer draws from a bitmap atlas, built offline from a real font. Three
 are set up for you:
 
 ```sh
-python3 tools/build_font.py --preset code        # even, modern (the default)
-python3 tools/build_font.py --preset terminal    # taller, denser
+python3 tools/build_font.py --preset terminal    # taller, denser — WHAT SHIPS
+python3 tools/build_font.py --preset code        # even, modern
 python3 tools/build_font.py --preset typewriter  # looks like a receipt
 ```
 
-Each downloads the font the first time and rewrites two files:
-`worker/src/font-atlas.js` and `web/font-atlas.json` — the Worker's copy and
-the browser preview's, which must always agree. Then deploy.
+**This changes the site, not just the paper.** The headline stays as it is, but
+the preview on the front page, the ticket, and the social card all follow,
+because they were never three things: they all read the same atlas.
+
+Each preset downloads the font the first time and rewrites three files —
+`worker/src/font-atlas.js` for the Worker, `web/lib/font-atlas.js` for the page
+(via `tools/sync_web.mjs`, which the script now runs for you), and
+`web/font-atlas.json`. **The first two must agree or the preview is a lie**, so
+if the script ever tells you it could not regenerate the browser copy, run
+`node tools/sync_web.mjs` before you deploy.
+
+Two more things, in this order:
+
+```sh
+npm --prefix worker test    # the pinned renderings are keyed by font name
+node tools/og_image.mjs     # the social card, in the new font
+```
+
+The test suite pins what the renderer produces, per font, and an atlas it does
+not know about **fails** rather than passing quietly. That is deliberate: add a
+row to `SHIPPED` in `worker/test/profiles.test.mjs` with the height and crc
+your build produces, and say in the comment where the numbers came from. Then
+deploy.
 
 Add `--preview` to see the result as ASCII art in your terminal before you
 commit to it.
@@ -53,6 +85,10 @@ commit to it.
 ```sh
 python3 tools/build_font.py --font path/to/Something.ttf --size 22 --preview
 ```
+
+`--size` is worth trying a few values of. It decides the pitch, and the pitch
+decides how many characters fit on a line: the presets are tuned, but your own
+font will not be.
 
 It must be **monospaced**. The atlas gives every glyph the same advance, and a
 proportional font forced through it comes out looking like a ransom note. The

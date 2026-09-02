@@ -68,10 +68,14 @@
   import { CURRENT_PROFILE, profileFor } from "/lib/profiles.js";
   import ATLAS from "/lib/font-atlas.js";
 
+  const profile = profileFor(CURRENT_PROFILE);
   const rendered = renderTicket(
     "Somebody you have never met typed this, and a machine in a flat printed it.",
-    { id: 410, createdAt: Date.parse("2026-09-02T21:47:00Z"), profile: profileFor(CURRENT_PROFILE) }
+    { id: 410, createdAt: Date.parse("2026-09-02T21:47:00Z"), profile }
   );
+  // Pre-rotated for a head mounted upside down. A card is looked at by people,
+  // so undo it - the same line web/app.js and web/preview.js each carry.
+  if (profile.flip180) rendered.rotate180();
   const cv = document.getElementById("cv");
   cv.width = rendered.widthPixels;
   cv.height = Math.max(rendered.height, 1);

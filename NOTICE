@@ -78,8 +78,12 @@ SIL Open Font License:
   JetBrains Mono     https://github.com/JetBrains/JetBrainsMono
   Courier Prime      https://github.com/quoteunquoteapps/CourierPrime
 
-The two web fonts that ARE committed - Kode Mono and Doto, in web/fonts - carry
-their OFL text alongside them in the same directory.
+No web fonts are committed, and none are loaded. The page has no typeface of
+its own for a message: what somebody types is drawn with the printer's own
+atlas, and the interface uses whatever the reader's system already has. The
+atlas committed in worker/src/font-atlas.js is a set of bitmaps of the glyphs
+this project draws, generated from the font named above; it is not the font,
+and it does not carry the font's outlines.
 
 The proof-of-work challenge format is Altcha's, reimplemented here rather than
 vendored; Altcha itself is MIT licensed.

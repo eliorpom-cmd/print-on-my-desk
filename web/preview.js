@@ -79,6 +79,13 @@ if (canvas && input) {
       createdAt: Date.now(),
       profile,
     });
+    // The MXW01's buffer is rendered PRE-ROTATED, because its head is mounted
+    // upside down and the bytes go to the head, not to a person. Undo it here
+    // or the preview comes out mirrored and unreadable - which is exactly what
+    // it did the first time this file met a flip180 profile. app.js does the
+    // same thing at the same point for the printed ticket; profiles with no
+    // rotation, like the TRP 100 III, have nothing to undo.
+    if (profile.flip180) rendered.rotate180();
     paint(rendered, empty ? FAINT : INK, STOCK);
 
     if (cols) {
