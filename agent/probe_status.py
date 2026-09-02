@@ -35,17 +35,17 @@ import escpos_printer as ep
 # The four real-time queries, and what the specification claims each says.
 # Column three is what has to be confirmed rather than believed.
 QUERIES = [
-    (1, "etat imprimante", "bit 3 = hors ligne"),
-    (2, "cause hors-ligne", "bit 2 = capot ouvert, bit 5 = erreur"),
-    (3, "cause erreur", "bit 3 = massicot, bit 5 = irrecuperable"),
-    (4, "capteur papier", "bits 2,3 = fin proche, bits 5,6 = rouleau vide"),
+    (1, "printer status", "bit 3 = offline"),
+    (2, "offline cause", "bit 2 = lid open, bit 5 = error"),
+    (3, "error cause", "bit 3 = cutter, bit 5 = unrecoverable"),
+    (4, "paper sensor", "bits 2,3 = near end, bits 5,6 = roll empty"),
 ]
 
 STATES = [
-    "rouleau charge, capot ferme   (l'etat normal, pour comparer)",
-    "rouleau RETIRE, capot referme (sors le rouleau et referme)",
+    "roll loaded, lid closed    (the normal state, for comparison)",
+    "roll REMOVED, lid closed   (take the roll out and close the lid)",
     "capot OUVERT",
-    "rouleau charge, capot ferme   (remets tout, pour prouver que ca revient)",
+    "roll loaded, lid closed    (put it all back, to prove it recovers)",
 ]
 
 
@@ -100,10 +100,10 @@ def quick(printer):
     every time on its own but the first of a run is always missing, it was
     latency. If one query never answers however often it is asked, it is mute.
     """
-    print("Rien n'est imprime. Rien n'est modifie.\n")
+    print("Nothing is printed. Nothing is changed.\n")
     verdict = {}
 
-    for n, name in [(4, "papier"), (2, "hors-ligne"), (1, "imprimante"), (3, "erreur")]:
+    for n, name in [(4, "paper"), (2, "offline"), (1, "printer"), (3, "error")]:
         answers = []
         for _ in range(5):
             answers.append(printer._dle_eot(n))
@@ -121,21 +121,21 @@ def quick(printer):
     print()
     paper = verdict.get(4, [])
     if len(paper) == 5:
-        print("VERDICT : la question sur le papier repond a chaque fois.")
-        print("Le probleme d'hier etait de la latence sur la premiere requete,")
-        print("et le vidage du tuyau l'a corrige. On peut continuer.")
+        print("VERDICT: the paper query answers every time.")
+        print("Yesterday's problem was latency on the first query, and")
+        print("flushing the pipe fixed it. Safe to carry on.")
     elif paper:
-        print("VERDICT : la question sur le papier repond, mais pas toujours.")
-        print("A traiter comme 'repond', avec une marge : une absence de reponse")
-        print("ne doit jamais etre lue comme 'plus de papier'. C'est deja le cas.")
+        print("VERDICT: the paper query answers, but not always.")
+        print("Treat as 'answers', with a margin: a missing answer must never")
+        print("be read as 'out of paper'. That is already the case.")
     else:
-        print("VERDICT : cette imprimante ne repond JAMAIS sur le papier.")
-        print("Elle imprimera quand meme - c'est prevu - mais le rouleau vide")
-        print("ne sera pas detecte, et il faudra le surveiller a l'oeil.")
+        print("VERDICT: this printer NEVER answers about paper.")
+        print("It will print anyway - that is by design - but an empty roll")
+        print("will not be detected, and has to be watched by eye.")
         if verdict.get(2):
-            print("En revanche DLE EOT 2 repond : le bit 5 y signale 'arret sur")
-            print("fin de papier'. C'est peut-etre la vraie source, a verifier")
-            print("en faisant le test complet ci-dessous, rouleau retire.")
+            print("DLE EOT 2 does answer, though: its bit 5 reports 'stopped on")
+            print("end of paper'. That may be the real source; confirm it with")
+            print("the full test below, with the roll removed.")
     print()
     return 0
 
@@ -147,35 +147,35 @@ def main():
         printer.open()
     except ep.PrinterError as err:
         print("cannot reach the printer: %s" % err)
-        print("\nSur un Raspberry Pi, les deux causes habituelles :")
-        print("  - usblp tient encore le peripherique. Le pilote le detache,")
-        print("    mais seulement s'il en a le droit. Essayer sudo, ou poser la")
+        print("\nOn a Raspberry Pi, the two usual causes:")
+        print("  - usblp still holds the device. The driver detaches it, but")
+        print("    only if it is allowed to. Try sudo, or install the udev")
         print("    regle udev de agent/README.md.")
-        print("  - l'imprimante est eteinte, ou le cable USB est un cable de charge.")
+        print("  - the printer is off, or the USB cable is a charging cable.")
         return 1
 
     if printer._in is None:
-        print("Cette imprimante n'expose aucun point de terminaison bulk IN.")
-        print("Elle ne peut rien rapporter, et status() repondra toujours 'inconnu'.")
-        print("Ce n'est pas bloquant - l'agent imprime quand meme - mais le")
-        print("rouleau vide ne sera jamais detecte, et docs/10-escpos.md doit le dire.")
+        print("This printer exposes no bulk IN endpoint.")
+        print("It can report nothing, and status() will always answer 'unknown'.")
+        print("Not a blocker - the agent prints anyway - but an empty roll")
+        print("will never be detected, and docs/10-escpos.md must say so.")
         return 1
 
     if not interactive:
         code = quick(printer)
-        print("Pour le test complet, avec le rouleau retire et le capot ouvert :")
+        print("For the full test, with the roll removed and the lid open:")
         print("    python3 agent/probe_status.py --full")
         return code
 
-    print("Quatre etats, dans l'ordre. Rien n'est imprime.")
+    print("Four states, in order. Nothing is printed.")
     for label in STATES:
-        input("\nMets la machine dans cet etat : %s\n  puis appuie sur Entree." % label)
+        input("\nPut the machine in this state: %s\n  then press Enter." % label)
         time.sleep(0.2)
         sweep(printer, label)
 
-    print("\nColle ce qui precede dans la conversation. Ca remplit la section 3")
-    print("de docs/10-escpos.md et remplace les avertissements 'non confirme'")
-    print("dans escpos_printer.status() par les vrais bits.")
+    print("\nPaste everything above into your notes. It fills section 3 of")
+    print("docs/10-escpos.md and replaces the 'unconfirmed' warnings in")
+    print("escpos_printer.status() with the real bits.")
     return 0
 
 

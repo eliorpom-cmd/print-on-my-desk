@@ -1,8 +1,8 @@
 # Everything we still do not know about this printer, asked in one run.
 #
-#   python3 agent/diagnose.py            sans papier : USB, requetes, reprise
-#   python3 agent/diagnose.py --paper    ajoute le ticket de calibration
-#   python3 agent/diagnose.py --tear     mesure tete -> barre de dechirement
+#   python3 agent/diagnose.py            no paper: USB, queries, recovery
+#   python3 agent/diagnose.py --paper    adds the calibration ticket
+#   python3 agent/diagnose.py --tear     measures head -> tear bar
 #
 # WHY THIS EXISTS
 #
@@ -65,7 +65,7 @@ def bits(value):
 
 
 def usb_identity(printer):
-    title("A. Ce que le bus USB dit de la machine")
+    title("A. What the USB bus says about the machine")
     device = printer.device
     if device is None:
         print("  pas de device")
@@ -86,9 +86,9 @@ def usb_identity(printer):
     print("  produit         %s" % text(device.iProduct))
     print("  serie           %s" % text(device.iSerialNumber))
     print()
-    print("  Ces identifiants sont utiles si un jour il faut epingler la machine")
-    print("  dans config.py (USB_VENDOR_ID / USB_PRODUCT_ID), ou ecrire une regle")
-    print("  udev plus precise que la classe 07.")
+    print("  These ids are what you need if you ever have to pin the machine")
+    print("  down in config.py (USB_VENDOR_ID / USB_PRODUCT_ID), or write a udev")
+    print("  rule narrower than class 07.")
     print()
     for configuration in device:
         for interface in configuration:
@@ -110,16 +110,16 @@ def usb_identity(printer):
                     % (endpoint.bEndpointAddress, direction, endpoint.wMaxPacketSize)
                 )
     print()
-    print("  Le protocole 2 sur une interface de classe 7 veut dire bidirectionnel.")
-    print("  C'est ce qui permet de lire l'etat ; un protocole 1 serait muet.")
+    print("  Protocol 2 on a class 7 interface means bidirectional.")
+    print("  That is what lets the status be read; protocol 1 would be mute.")
 
 
 # --- B. the queries, many times ---------------------------------------------
 
 
 def query_stability(printer, rounds=15):
-    title("B. Les requetes d'etat, %d tours" % rounds)
-    print("  Rien n'est imprime.\n")
+    title("B. The status queries, %d rounds" % rounds)
+    print("  Nothing is printed.\n")
 
     order = [1, 2, 3, 4]
     seen = {n: [] for n in order}
@@ -131,7 +131,7 @@ def query_stability(printer, rounds=15):
                 seen[n].append(("ERR", str(err)[:40]))
             time.sleep(0.02)
 
-    names = {1: "etat", 2: "hors-ligne", 3: "erreur", 4: "papier"}
+    names = {1: "status", 2: "offline", 3: "error", 4: "paper"}
     stable = True
     values = {}
     for n in order:
@@ -158,7 +158,7 @@ def query_stability(printer, rounds=15):
             print("             %d erreurs" % errors)
             stable = False
         if len(distinct) > 1:
-            print("             ATTENTION: la valeur change d'un tour a l'autre")
+            print("             WARNING: the value changes from round to round")
             stable = False
 
     print()
@@ -169,16 +169,16 @@ def query_stability(printer, rounds=15):
     marker = set(values.get(1, []))
     others = set(values.get(2, [])) | set(values.get(3, [])) | set(values.get(4, []))
     if marker and marker & others:
-        print("  DECALAGE PROBABLE : la valeur de DLE EOT 1 apparait ailleurs.")
-        print("  C'est exactement le defaut du 31 aout. Ne pas se fier a l'etat.")
+        print("  LIKELY SHIFT: the DLE EOT 1 value turns up somewhere else.")
+        print("  This is exactly the 31 August fault. Do not trust the status.")
         stable = False
     elif marker:
-        print("  Pas de decalage : DLE EOT 1 garde une valeur qui n'est qu'a lui.")
+        print("  No shift: DLE EOT 1 keeps a value that is its alone.")
 
     if stable:
-        print("  VERDICT : l'etat est stable et aligne. On peut s'y fier.")
+        print("  VERDICT: the status is stable and aligned. It can be trusted.")
     else:
-        print("  VERDICT : l'etat n'est pas fiable. Voir les lignes ci-dessus.")
+        print("  VERDICT: the status is not reliable. See the lines above.")
     return stable
 
 
@@ -186,10 +186,10 @@ def query_stability(printer, rounds=15):
 
 
 def first_answer_latency(printer, rounds=4):
-    title("C. Combien de temps l'imprimante met a repondre apres ESC @")
-    print("  C'est ce qui avait fausse les deux premieres campagnes : la reponse")
-    print("  arrivait apres la fin de l'attente, puis etait lue comme la reponse")
-    print("  a la question SUIVANTE. Rien n'est imprime.\n")
+    title("C. How long the printer takes to answer after ESC @")
+    print("  This is what spoiled the first two campaigns: the answer arrived")
+    print("  after the wait had ended, and was then read as the answer to the")
+    print("  NEXT question. Nothing is printed.\n")
 
     delays = []
     for i in range(rounds):
@@ -232,20 +232,20 @@ def first_answer_latency(printer, rounds=4):
 
 
 def recovery(printer, timeout_s=90):
-    title("D. Est-ce qu'elle revient toute seule ?")
-    print("  C'est la question qui decide si changer un rouleau demande")
-    print("  d'eteindre et rallumer la machine, ou pas. Rien n'est imprime.\n")
-    input("  Ouvre le capot, puis appuie sur Entree. ")
+    title("D. Does it come back on its own?")
+    print("  This is the question that decides whether changing a roll means")
+    print("  power-cycling the machine, or not. Nothing is printed.\n")
+    input("  Open the lid, then press Enter. ")
 
     printer.close()
     try:
         printer.open(attempts=1)
         state = printer.status()
-        print("  capot ouvert -> elle repond quand meme : %r" % state)
+        print("  lid open -> it answers anyway: %r" % state)
     except ep.PrinterError as err:
-        print("  capot ouvert -> injoignable, comme prevu (%s)" % str(err)[:60])
+        print("  lid open -> unreachable, as expected (%s)" % str(err)[:60])
 
-    input("\n  Referme le capot. N'attends pas, appuie sur Entree tout de suite. ")
+    input("\n  Close the lid. Do not wait - press Enter straight away. ")
     started = time.monotonic()
     printer.close()
     while time.monotonic() - started < timeout_s:
@@ -253,17 +253,17 @@ def recovery(printer, timeout_s=90):
             printer.open(attempts=1, pause_s=0)
             state = printer.status()
             took = time.monotonic() - started
-            print("\n  REVENUE toute seule apres %.1f s." % took)
+            print("\n  CAME BACK on its own after %.1f s." % took)
             print("  etat : %r" % state)
             print()
-            print("  Donc changer un rouleau ne demande rien de special : l'agent")
-            print("  la retrouve seul. Il verifie toutes les %d s." % 30)
+            print("  So changing a roll needs nothing special: the agent finds it")
+            print("  again by itself. It checks every %d s." % 30)
             return took
         except ep.PrinterError:
             time.sleep(1.0)
     print("\n  PAS REVENUE en %d s." % timeout_s)
-    print("  Il faudra eteindre et rallumer l'imprimante apres chaque rouleau,")
-    print("  et c'est a ecrire dans la doc plutot qu'a decouvrir un soir charge.")
+    print("  The printer will have to be power-cycled after every roll, and")
+    print("  that belongs in the documentation rather than in a busy evening.")
     return None
 
 
@@ -358,30 +358,30 @@ def calibration_rows():
 
 
 def calibration_print(printer):
-    title("E. Le ticket de calibration")
+    title("E. The calibration ticket")
     rows = calibration_rows()
     expected_mm = RULER_GAP / ep.DOTS_PER_MM
-    print("  %d lignes, environ %.0f mm de papier.\n" % (len(rows), len(rows) / ep.DOTS_PER_MM))
+    print("  %d lines, about %.0f mm of paper.\n" % (len(rows), len(rows) / ep.DOTS_PER_MM))
     printer.print_lines(iter(rows), len(rows), feed_lines=120)
-    print("  Imprime. Trois choses a regarder, dans l'ordre :\n")
-    print("  1. LA DIAGONALE, en haut. C'est la plus importante.")
-    print("     Une ligne CONTINUE et reguliere  -> l'ordre des bits est bon.")
-    print("     Une echelle de petits batons penches dans l'autre sens")
-    print("       -> il est inverse, et tout ce qui s'imprime est faux.")
-    print("     Rien d'autre ne prouve ca : le CRC qui correspondait a la")
-    print("     premiere impression se calcule AVANT l'inversion, donc il")
-    print("     correspondrait aussi bien si l'inversion etait supprimee.\n")
-    print("  2. LES DEUX BLOCS et la barre pleine, au milieu.")
-    print("     Mesure la barre : elle doit faire environ 72 mm.")
-    print("     Les blocs doivent toucher les deux bords de la zone imprimable.\n")
-    print("  3. LES DEUX BARRES A MI-LARGEUR, tout en bas.")
-    print("     Ce sont les seules qui ne traversent pas toute la largeur :")
-    print("     elles s'arretent au quart de chaque bord. Impossible de les")
-    print("     confondre avec la barre pleine du point 2.")
-    print("     Mesure le BLANC entre elles : attendu %.1f mm." % expected_mm)
-    print("     C'est la resolution verticale, dont depend toute longueur")
-    print("     calculee dans le projet. Si tu trouves autre chose, dis-le moi :")
-    print("     %.1f mm donnerait %.4f points/mm." % (expected_mm, ep.DOTS_PER_MM))
+    print("  Printed. Three things to look at, in order:\n")
+    print("  1. THE DIAGONAL, at the top. This is the important one.")
+    print("     A CONTINUOUS, even line          -> the bit order is right.")
+    print("     A ladder of little strokes leaning the other way")
+    print("       -> it is reversed, and everything printed is wrong.")
+    print("     Nothing else proves this: the CRC that matched on the first")
+    print("     print is computed BEFORE the reversal, so it would match")
+    print("     just as well with the reversal removed.\n")
+    print("  2. THE TWO BLOCKS and the solid bar, in the middle.")
+    print("     Measure the bar: it should be about 72 mm.")
+    print("     The blocks should touch both edges of the printable area.\n")
+    print("  3. THE TWO HALF-WIDTH BARS, right at the bottom.")
+    print("     They are the only ones that do not cross the full width:")
+    print("     they stop a quarter in from each edge. Impossible to confuse")
+    print("     with the solid bar in point 2.")
+    print("     Measure the WHITE between them: expected %.1f mm." % expected_mm)
+    print("     That is the vertical resolution, which every length in this")
+    print("     project is computed from. If you measure something else:")
+    print("     %.1f mm would mean %.4f dots/mm." % (expected_mm, ep.DOTS_PER_MM))
 
 
 # --- G. do blank raster rows actually feed paper? ---------------------------
@@ -420,18 +420,18 @@ def _gap_test(printer, index, gap_rows, use_feed):
 
 
 def gap_tests(printer):
-    title("G. Est-ce que les lignes blanches font vraiment avancer le papier ?")
-    print("  Le ticket de calibration a donne 5 mm la ou 400 lignes blanches")
-    print("  devraient en faire 56. Trois causes possibles, et elles ne se")
-    print("  reparent pas pareil :")
+    title("G. Do blank lines really advance the paper?")
+    print("  The calibration ticket gave 5 mm where 400 blank lines should")
+    print("  have given 56. Three possible causes, and they are not fixed")
+    print("  the same way:")
     print()
-    print("    - les BANDES entierement blanches sont ignorees  (128 lignes)")
-    print("    - TOUTES les lignes blanches sont ignorees")
-    print("    - autre chose")
+    print("    - entirely blank BANDS are dropped               (128 lines)")
+    print("    - ALL blank lines are dropped")
+    print("    - something else")
     print()
-    print("  Quatre essais. Chacun est precede de son numero, en petits traits")
-    print("  a gauche : un trait, deux traits, trois traits, quatre traits.")
-    print("  Mesure le BLANC entre les deux barres pleines de chaque essai.\n")
+    print("  Four trials. Each is preceded by its number, as short strokes")
+    print("  on the left: one stroke, two, three, four.")
+    print("  Measure the WHITE between each trial's two solid bars.\n")
 
     plan = [
         (1, 40, False, 40 / ep.DOTS_PER_MM),
@@ -440,79 +440,79 @@ def gap_tests(printer):
         (4, 200, True, 200 / ep.DOTS_PER_MM),
     ]
     for index, gap, use_feed, expected in plan:
-        how = "ESC J" if use_feed else "lignes blanches"
-        print("  essai %d : %3d lignes en %-16s -> attendu %.1f mm" % (index, gap, how, expected))
+        how = "ESC J" if use_feed else "blank lines"
+        print("  trial %d : %3d lines as %-16s -> expected %.1f mm" % (index, gap, how, expected))
         _gap_test(printer, index, gap, use_feed)
 
     print()
-    print("  Comment lire le resultat :")
+    print("  How to read the result:")
     print()
-    print("    1=5.6  2=28  3=56  4=28   tout va bien, le probleme est ailleurs")
-    print("    1=5.6  2=28  3=20  4=28   seules les BANDES blanches sautent")
-    print("    1=0    2=0   3=0   4=28   TOUTES les lignes blanches sautent")
+    print("    1=5.6  2=28  3=56  4=28   all well, the problem is elsewhere")
+    print("    1=5.6  2=28  3=20  4=28   only blank BANDS are dropped")
+    print("    1=0    2=0   3=0   4=28   ALL blank lines are dropped")
     print()
-    print("  L'essai 4 est le temoin : il avance le papier avec ESC J, la")
-    print("  commande d'avance, et pas avec de l'image. S'il tombe juste alors")
-    print("  que les autres non, c'est l'image qui est en cause et le correctif")
-    print("  est simple : envoyer les blancs en ESC J plutot qu'en trame.")
+    print("  Trial 4 is the control: it advances the paper with ESC J, the")
+    print("  feed command, rather than with image. If it is right when the")
+    print("  others are not, the image is the cause and the fix is simple:")
+    print("  send the blanks as ESC J rather than as raster.")
 
 
 # --- H. which buzzer command does this printer know? ------------------------
 
 
 def beep_tests(printer):
-    title("H. Le buzzer")
-    print("  La commande de buzzer n'est PAS dans la liste du manuel (section 8).")
-    print("  La machine en a un - elle bipe sur erreur - mais rien ne documente")
-    print("  comment le declencher. Trois candidates, essayees une par une.")
+    title("H. The buzzer")
+    print("  The buzzer command is NOT in the manual's list (section 8).")
+    print("  The machine has one - it beeps on error - but nothing documents")
+    print("  how to trigger it. Candidates, tried one at a time.")
     print()
-    print("  L'imprimante est une Sewoo en dessous (0525:A700), donc ESC B est")
-    print("  la plus probable : c'est le buzzer des Sewoo et des Citizen.")
-    print("  Rien n'est imprime.\n")
+    print("  The printer is a Sewoo underneath (0525:A700), so ESC B is the")
+    print("  most likely: it is the Sewoo and Citizen buzzer.")
+    print("  Nothing is printed.\n")
 
     for i, (name, build) in enumerate(ep.BEEP_CANDIDATES):
-        input("  Essai %d/%d : %s\n    Entree pour l'envoyer. " % (i + 1, len(ep.BEEP_CANDIDATES), name))
+        input("  Trial %d/%d: %s\n    Enter to send it. " % (i + 1, len(ep.BEEP_CANDIDATES), name))
         try:
             printer.beep(times=3, length=2, variant=i)
         except ep.PrinterError as err:
-            print("    erreur : %s" % err)
+            print("    error: %s" % err)
             continue
         time.sleep(1.5)
-        print("    envoye. Ca a fait du bruit ?\n")
+        print("    sent. Did it make a sound?\n")
 
-    print("  Dis-moi le numero de celle qui a marche, et je la fixe dans")
-    print("  agent/config.py (BEEP_VARIANT). Si aucune n'a rien fait, on le")
-    print("  note dans docs/10-escpos.md : cette machine ne se laisse pas sonner,")
-    print("  et le ticket a tip jar devra se signaler autrement.")
+    print("  Note the number of the one that worked and pin it in")
+    print("  agent/config.py (BEEP_VARIANT). If none of them did anything,")
+    print("  write it down in docs/10-escpos.md: this machine cannot be made to")
+    print("  beep, and a priority ticket has to announce itself some other way.")
 
 
 def tear_print(printer):
-    title("F. Mesurer la distance tete -> barre de dechirement")
-    print("  Imprime un trait et n'avance PAS ensuite, donc le trait reste")
-    print("  exactement sous la tete d'impression.\n")
+    title("F. Measuring the head -> tear bar distance")
+    print("  Prints a bar and does NOT feed afterwards, so the bar stays")
+    print("  exactly under the print head.\n")
     rows = _bar(3)
     printer.print_lines(iter(rows), len(rows), feed_lines=0)
-    print("  Fait. Maintenant :\n")
-    print("  1. Dechire le papier sur la barre, normalement.")
-    print("  2. Mesure du TRAIT jusqu'au BORD DECHIRE.\n")
-    print("  C'est la seule mesure du projet ou partir d'un bord dechire est")
-    print("  correct, parce que le bord dechire EST la barre - c'est justement")
-    print("  la distance qu'on cherche. Partout ailleurs c'est interdit,")
-    print("  et deux estimations contradictoires sont venues de la (ETAT 2.10).\n")
-    print("  Donne-moi les millimetres. feed_lines vaut mm x %.4f," % ep.DOTS_PER_MM)
-    print("  et il est aujourd'hui a 90, soit %.1f mm - une estimation." % (90 / ep.DOTS_PER_MM))
+    print("  Done. Now:\n")
+    print("  1. Tear the paper off on the bar, normally.")
+    print("  2. Measure from the BAR to the TORN EDGE.\n")
+    print("  This is the one measurement in the project where starting from a")
+    print("  torn edge is correct, because the torn edge IS the bar - that is")
+    print("  precisely the distance being looked for. Everywhere else it is")
+    print("  forbidden, and two contradictory estimates came from doing it.\n")
+    print("  Write down the millimetres. feed_lines is mm x %.4f," % ep.DOTS_PER_MM)
+    print("  and it is 90 today, which is %.1f mm - an estimate." % (90 / ep.DOTS_PER_MM))
 
 
 # --- main -------------------------------------------------------------------
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Sonde profonde de la TRP 100 III")
-    parser.add_argument("--paper", action="store_true", help="ajoute le ticket de calibration")
-    parser.add_argument("--tear", action="store_true", help="mesure tete -> barre")
-    parser.add_argument("--gaps", action="store_true", help="les lignes blanches avancent-elles ?")
-    parser.add_argument("--beep", action="store_true", help="quelle commande fait biper ?")
-    parser.add_argument("--recovery", action="store_true", help="test de reprise, interactif")
+    parser = argparse.ArgumentParser(description="Deep probe of the TRP 100 III")
+    parser.add_argument("--paper", action="store_true", help="adds the calibration ticket")
+    parser.add_argument("--tear", action="store_true", help="measures head -> tear bar")
+    parser.add_argument("--gaps", action="store_true", help="do blank lines advance the paper?")
+    parser.add_argument("--beep", action="store_true", help="which command makes it beep?")
+    parser.add_argument("--recovery", action="store_true", help="recovery test, interactive")
     parser.add_argument("--rounds", type=int, default=15)
     args = parser.parse_args()
 
@@ -540,10 +540,10 @@ def main():
 
     if not (args.paper or args.tear or args.recovery or args.gaps or args.beep):
         print()
-        print("Rien n'a ete imprime. Pour aller plus loin :")
-        print("  python3 agent/diagnose.py --recovery   revient-elle seule ? (sans papier)")
-        print("  python3 agent/diagnose.py --paper      ordre des bits, largeur, resolution")
-        print("  python3 agent/diagnose.py --tear       distance tete -> barre")
+        print("Nothing was printed. To go further:")
+        print("  python3 agent/diagnose.py --recovery   does it come back? (no paper)")
+        print("  python3 agent/diagnose.py --paper      bit order, width, resolution")
+        print("  python3 agent/diagnose.py --tear       head -> bar distance")
     return 0
 
 
