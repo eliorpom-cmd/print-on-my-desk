@@ -49,10 +49,16 @@ const DEFAULTS = {
   // single row holding the MXW01's 7 would have fed the TRP 100 III one
   // millimetre and made every ticket undetachable - see jobs.js.
   //
-  // Empty means "whatever the profile says": 7 on the MXW01 (measured on paper
-  // in M4) and 90 on the TRP 100 III (an estimate, still to be measured the
-  // same way - print two marks, measure the white between them, and never
-  // measure from a torn edge).
+  // Empty means "whatever the profile says": 7 on the MXW01 and 220 on the
+  // TRP 100 III, both measured on paper.
+  //
+  // This comment said 90 for the TRP 100 III until the number was measured -
+  // 29 mm, head to tear bar, which is 206 lines, so 220 to put the tear about
+  // 2 mm past the last printed line rather than through it. 90 was an estimate
+  // carried over from the MXW01's 10 mm and wrong by a factor of two and a
+  // half: that printer has no guillotine between its head and its exit, and
+  // this one does. profiles.js carries the measurement and the reasoning; do
+  // not restate a number here that lives there.
   feed_lines_mxw01: "",
   feed_lines_trp100: "",
   // How many printer lines one batched strip may carry. Deliberately well

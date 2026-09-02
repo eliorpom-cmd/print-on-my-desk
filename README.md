@@ -118,8 +118,8 @@ a room where somebody sleeps. A hundred friends is a delight. A thousand
 strangers is a machine that overheats, a roll that runs out at 3 a.m., and a
 moderation queue you will stop reading by the second day.
 
-The defaults here assume the first case: one message per person per day, and
-everything held for your approval. If you point this at a wider audience, read
+The defaults here assume the first case: three messages per person per day,
+and everything held for your approval. If you point this at a wider audience, read
 [docs/07-operating.md](docs/07-operating.md) first and turn things down, not up.
 
 ---

@@ -186,7 +186,14 @@ export async function loadDesk(db, settings, now = Date.now()) {
     today,
     device: device ?? null,
     settings: { ...settings, season_closed: seasonClosed ? "1" : "0" },
-    pending_ttl_h: num(settings, "pending_ttl_h", 2),
+    // 0, matching what the expiry actually does when the row is absent
+    // (index.js reads the same setting with a default of 0 in both places it
+    // matters). It said 2 here, so on a fresh install the desk was told
+    // messages expire in two hours while nothing expired at all. Harmless
+    // today only because renderPending ignores the value it is handed - which
+    // is exactly the kind of disagreement that becomes a bug the moment
+    // somebody starts using it.
+    pending_ttl_h: num(settings, "pending_ttl_h", 0),
     // The profile ids the desk may offer, sent rather than hardcoded in the
     // page. profiles.js is the one list of machines this project knows about,
     // and CONTRIBUTING invites people to add to it: a second copy in the admin
