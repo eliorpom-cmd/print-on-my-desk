@@ -126,7 +126,21 @@ class Agent:
         self.pending_done = None
 
         self.paused = False
-        self.last_heartbeat = 0.0
+        # None, not 0.0, and it is the difference between a printer that obeys
+        # the kill switch and one that obeys it from the second minute.
+        #
+        # `due` below was `time.monotonic() - self.last_heartbeat >= 60`, which
+        # with a zero start reads as "has the machine been up for a minute" -
+        # because time.monotonic()'s zero is the boot, and the documentation is
+        # explicit that its reference point is undefined. On a Raspberry Pi
+        # that starts this service AT boot, the first cycle therefore found
+        # `due` false, the printer healthy, and skipped the heartbeat entirely:
+        # the agent polled and printed before it had ever been told the service
+        # was paused.
+        #
+        # Found by CI on a runner that had been up for eight seconds. It passed
+        # on every development machine, all of which had been up for days.
+        self.last_heartbeat = None
         self.net_backoff = NET_RETRY_S
 
     # -- state ----------------------------------------------------------
@@ -356,7 +370,12 @@ class Agent:
         """One turn. Returns how long to wait before the next one."""
         self.refresh_printer_state()
 
-        due = time.monotonic() - self.last_heartbeat >= HEARTBEAT_EVERY_S
+        # The first one is never optional: nothing is known about the service
+        # until it has happened.
+        due = (
+            self.last_heartbeat is None
+            or time.monotonic() - self.last_heartbeat >= HEARTBEAT_EVERY_S
+        )
         if due or not self.can_print:
             if not self.beat():
                 return self.after_network_failure()

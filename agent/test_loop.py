@@ -326,6 +326,38 @@ check(
 
 print("\nthe kill switch")
 
+# The first cycle after a start MUST beat before it does anything else.
+#
+# It did not, and the bug was invisible on every machine anybody develops on.
+# `due` was `time.monotonic() - last_heartbeat >= 60` with last_heartbeat at
+# zero, which is really "has this computer been up for a minute" - monotonic's
+# zero is the boot and its reference point is explicitly undefined. On a
+# Raspberry Pi that starts this service AT boot, the first cycle found a
+# healthy printer, decided no heartbeat was due, and polled: the agent printed
+# a ticket before it had ever been told the service was paused.
+#
+# Caught by CI on a runner eight seconds old. It passed on every laptop, all of
+# which had been up for days. Which is why the check below is on the FIRST
+# cycle and asserts the beat rather than the poll.
+agent, api, printer = build(
+    api=FakeApi(jobs=[make_job()], heartbeat={"open": True, "kill_switch": True})
+)
+
+# A machine that booted eight seconds ago, which is what a Pi looks like when
+# systemd starts this at boot - and what the CI runner was. The clock is moved
+# rather than the agent's own field, so this tests the condition the bug
+# actually needed rather than the shape of the fix.
+_real_monotonic = agent_main.time.monotonic
+agent_main.time.monotonic = lambda: 8.0
+try:
+    agent.cycle()
+finally:
+    agent_main.time.monotonic = _real_monotonic
+
+check("the very first cycle beats before anything else", len(api.beats) == 1)
+check("even on a machine that booted a moment ago", api.poll_calls == [])
+check("and nothing was printed", printer.last_sent_lines == 0)
+
 agent, api, printer = build(
     api=FakeApi(jobs=[make_job()], heartbeat={"open": True, "kill_switch": True})
 )
