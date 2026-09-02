@@ -21,8 +21,21 @@ ask() { local prompt="$1" var="$2" current="${3:-}"; local answer
 say "0/5  Which printer"
 echo "  1) An 80 mm receipt printer, over USB   (ESC/POS)"
 echo "  2) The 58 mm Bluetooth one             (MXW01 and its many names)"
-ask "Which one" PRINTER_CHOICE "1"
-if [ "$PRINTER_CHOICE" = "2" ]; then DRIVER=ble; else DRIVER=escpos; fi
+# Anything that is not recognised is asked again rather than assumed. It used
+# to be `if answer = 2 then ble else escpos`, so somebody who typed "ble" -
+# which is the word this script and the documentation both use for it - got the
+# USB driver, silently, and found out when the service could not find a printer
+# that was sitting there connected over Bluetooth.
+DRIVER=""
+while [ -z "$DRIVER" ]; do
+  ask "Which one" PRINTER_CHOICE "1"
+  case "$(printf '%s' "$PRINTER_CHOICE" | tr '[:upper:]' '[:lower:]')" in
+    1|usb|escpos|esc/pos) DRIVER=escpos ;;
+    2|ble|bt|bluetooth|mxw01) DRIVER=ble ;;
+    *) echo "  Please answer 1 or 2." ;;
+  esac
+done
+echo "  -> $DRIVER"
 
 say "1/5  System packages"
 # libusb is NOT pulled in by pip. pyusb is only the bindings; libusb is what

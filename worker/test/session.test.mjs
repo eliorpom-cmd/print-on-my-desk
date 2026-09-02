@@ -134,6 +134,12 @@ test("harden sets the headers and leaves a handler's own policy alone", () => {
   assert.equal(plain.headers.get("x-frame-options"), "DENY");
   assert.equal(plain.headers.get("referrer-policy"), "no-referrer");
   assert.match(plain.headers.get("strict-transport-security"), /max-age=31536000/);
+  // The static files carry this from web/_headers and the Worker's own pages
+  // did not, so /admin was the one page on the site without it.
+  assert.match(plain.headers.get("permissions-policy"), /camera=\(\)/);
+  // And bluetooth stays unnamed, here as in web/_headers: restricting it is
+  // how /bridge silently stops being able to see a printer.
+  assert.doesNotMatch(plain.headers.get("permissions-policy"), /bluetooth/);
   assert.equal(plain.headers.get("content-security-policy"), JSON_CSP);
   assert.equal(plain.headers.get("content-type"), "application/json");
 

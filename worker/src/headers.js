@@ -17,6 +17,18 @@ const COMMON = {
   // frame-ancestors covers this for anything modern; X-Frame-Options is for
   // what is not, and costs one line.
   "x-frame-options": "DENY",
+  // Matches web/_headers, which had it and this list did not - so every static
+  // file was covered and every page the Worker generates, /admin included, was
+  // not. Nothing here asks for a camera or a location, and saying so costs a
+  // header.
+  //
+  // `bluetooth` is deliberately absent, exactly as in web/_headers. Naming it
+  // here would not reach /bridge, which is a static file, but the two lists
+  // are meant to be read as one and a reader who found bluetooth restricted in
+  // half of them would be right to be confused. If you ever add it: leaving
+  // bluetooth out is what keeps /bridge able to see a printer, and denying it
+  // fails with no error anybody can act on.
+  "permissions-policy": "geolocation=(), microphone=(), camera=(), interest-cohort=()",
 };
 
 /**

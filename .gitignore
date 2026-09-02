@@ -11,6 +11,10 @@ bridge/config.js
 # The starter list ships; yours should not.
 # worker/src/terms.js
 
+# Written by tools/preview.mjs every time somebody previews a ticket, in the
+# directory they ran it from. Not output anybody means to commit.
+ticket.png
+
 # Node / Cloudflare
 node_modules/
 .wrangler/
