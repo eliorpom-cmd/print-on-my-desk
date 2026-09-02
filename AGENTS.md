@@ -56,6 +56,14 @@ Do not skip ahead. Each step fails in a way the next one cannot diagnose.
    Also copy `.dev.vars.example` to `.dev.vars` with different values, for
    local runs. `.dev.vars` is gitignored; keep it that way.
 
+   **`npm run dev` is not offline.** The AI binding has no local
+   implementation, so the dev server opens a connection to the user's
+   Cloudflare account before it serves anything: it needs `wrangler login`
+   and, if their login has more than one account, `account_id` uncommented in
+   `wrangler.jsonc`. Without that it exits mid-start-up and no port opens. Do
+   not go hunting in the code for this - it is the configuration, and
+   `docs/08-troubleshooting.md` says so too.
+
 5. **The database, then the deploy.**
    ```sh
    npm run db:remote

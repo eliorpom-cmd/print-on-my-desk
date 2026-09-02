@@ -11,6 +11,14 @@
 
   // Only needed if your Cloudflare login has more than one account. Wrangler
   // will tell you, and print the ids, the first time it cannot choose.
+  //
+  // Uncomment it for `npm run dev` too, not only for `npm run deploy`. The AI
+  // binding below makes the dev server open a connection to your account
+  // before it serves anything, so a login with two accounts stops `wrangler
+  // dev` dead - "More than one account available but unable to select one in
+  // non-interactive mode" - and no local server starts at all. Same cause as
+  // the deploy failure, same cure, but the message arrives while you are
+  // reading a wall of start-up output and is easy to miss.
   // "account_id": "YOUR_ACCOUNT_ID",
 
   // Fill this in once, from `npx wrangler d1 create printer`. It prints a
@@ -45,6 +53,15 @@
   //
   // If you would rather not use it at all: delete this line and set the
   // `moderation` setting to 0 from /admin. The word list still runs.
+  //
+  // ONE THING TO KNOW BEFORE YOU RUN `npm run dev`. Workers AI has no local
+  // implementation: the model runs on Cloudflare's machines, so even the local
+  // dev server proxies this binding to your account. `wrangler dev` therefore
+  // needs you logged in and online, and needs `account_id` above if your login
+  // has more than one account. On a plane, or before `wrangler login`, delete
+  // this line for the session - moderation.js already treats a missing model
+  // as "hold it for a human" rather than as "let it through", so the queue
+  // behaves correctly with no AI at all.
   "ai": { "binding": "AI" },
 
   // Housekeeping that has to happen even when nobody is polling: messages

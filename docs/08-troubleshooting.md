@@ -109,6 +109,18 @@ path. Read [07-operating §4](07-operating.md) and run
 **Deploy fails with "More than one account".** Uncomment `account_id` in
 `wrangler.jsonc` and paste in the one you want; wrangler prints the list.
 
+**`npm run dev` prints the same thing and then no server starts.** Same cause,
+same cure, and worth stating separately because the failure looks different: it
+scrolls past in the middle of the start-up output and the port never opens. The
+AI binding has no local implementation, so the dev server connects to your
+account before it serves anything. Uncomment `account_id`, or set
+`CLOUDFLARE_ACCOUNT_ID` in your shell for one session.
+
+**`npm run dev` will not start with no internet, or before `wrangler login`.**
+Same reason. If you want a dev server on a train, delete the `ai` line from
+`wrangler.jsonc` for the session: messages are then held for you rather than
+classified, which is what happens when the model is unavailable anyway.
+
 **Messages arrive but the AI moderation never runs.** Check the `ai` binding is
 still in `wrangler.jsonc`. When the model is unavailable, messages are held for
 you rather than approved — which looks like "everything is pending", and is the
