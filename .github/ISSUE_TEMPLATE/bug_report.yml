@@ -1,0 +1,64 @@
+name: Something does not work
+description: A step that failed, or behaviour that is wrong.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two things worth trying first, because they answer most reports faster
+        than we can: [docs/08-troubleshooting.md](https://github.com/eliorpom-cmd/print-on-my-desk/blob/main/docs/08-troubleshooting.md),
+        and `/admin` — a message that never printed is very often still sitting
+        there as `pending`, waiting for a tap, which is the system working.
+
+        **If this is a security problem, close this tab** and read
+        [SECURITY.md](https://github.com/eliorpom-cmd/print-on-my-desk/blob/main/SECURITY.md) instead. Do not describe it in
+        a public issue.
+
+  - type: dropdown
+    id: setup
+    attributes:
+      label: Which set-up
+      description: The three ends are different programs. This decides who reads the report.
+      options:
+        - Browser bridge (a tab is open, Web Bluetooth)
+        - Always-on agent (Raspberry Pi or another computer)
+        - Microcontroller (Pico 2 W)
+        - Not there yet — it failed during set-up
+    validations:
+      required: true
+
+  - type: input
+    id: printer
+    attributes:
+      label: Which printer
+      description: Make and model, or the name it was sold under. "MXW01" and "an 80 mm one off eBay" are both fine answers.
+      placeholder: MXW01 / AURES TRP 100 III / …
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What you did, and what happened
+      description: What you saw, in order. What you expected instead. Resist concluding — the conclusion is the part most often wrong, and the observation is the part we cannot get any other way.
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: The error, verbatim
+      description: |
+        Copy it rather than describing it. The agent logs one JSON object per line — `journalctl -u printer-agent -n 50`. The browser bridge writes to its own log panel and to the console. The Worker: `cd worker && npx wrangler tail`.
+
+        Read the `error` field, not the event name: `poll_failed` is the same event for a wrong address, a refused token and an unplugged router.
+      render: text
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you post
+      options:
+        - label: The tests pass on a clean clone (the list is in CONTRIBUTING). If they do not, say which failed — that is a much better bug than this one.
+        - label: I have removed my tokens from anything I pasted above.
+          required: true

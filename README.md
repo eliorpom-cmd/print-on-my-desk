@@ -140,6 +140,9 @@ and everything held for your approval. If you point this at a wider audience, re
 | [10 · ESC/POS](docs/10-escpos.md) | The 80 mm receipt printer, over USB |
 | [AGENTS.md](AGENTS.md) | For a coding assistant doing this with you |
 
+Contributing, and what gets turned down: [CONTRIBUTING](CONTRIBUTING.md) and
+[CODE_OF_CONDUCT](CODE_OF_CONDUCT.md).
+
 ---
 
 ## Security

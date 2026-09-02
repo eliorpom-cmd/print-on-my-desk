@@ -71,6 +71,12 @@ If you change something here:
 * **Documentation that failed you.** If a step in the quick start did not work
   on your machine, that is a bug in the document. Say what you saw.
 
+## Conduct
+
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). It is short, and the part worth
+knowing before you open anything is that a good change can still be turned
+down for being out of scope, and that is not a judgement of you.
+
 ## Licence
 
 By contributing you agree your work is released under the AGPL-3.0, like the

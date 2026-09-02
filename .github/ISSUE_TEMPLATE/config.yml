@@ -1,0 +1,10 @@
+# Blank issues stay on. Not every report fits a form, and a form that turns
+# somebody away is worse than a thin issue.
+blank_issues_enabled: true
+contact_links:
+  - name: Something a stranger could exploit
+    url: https://github.com/eliorpom-cmd/print-on-my-desk/security/advisories/new
+    about: Report it privately. Never in a public issue — SECURITY.md explains why.
+  - name: It will not work and you are stuck
+    url: https://github.com/eliorpom-cmd/print-on-my-desk/blob/main/docs/08-troubleshooting.md
+    about: The troubleshooting page, which answers most of this.

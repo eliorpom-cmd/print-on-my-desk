@@ -1,0 +1,62 @@
+name: A printer that works (or does not)
+description: Report a machine you have actually printed from. These are very welcome.
+labels: ["printer"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        CONTRIBUTING asks for these by name. A printer somebody has really run
+        is worth more than any amount of reasoning about a datasheet, and this
+        project has been wrong about a datasheet before — the 80 mm machine it
+        ships a profile for is 512 dots wide where nearly every other one is
+        576, and only the paper settled it.
+
+  - type: input
+    id: model
+    attributes:
+      label: Make and model
+      placeholder: Include the USB id (`lsusb`) if you have it.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: transport
+    attributes:
+      label: How it connects
+      options:
+        - USB (ESC/POS)
+        - Bluetooth Low Energy
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Does it print correctly
+      description: Straight text, right way up, full width, and can you tear the ticket off? If something is wrong, say which of those.
+    validations:
+      required: true
+
+  - type: input
+    id: width
+    attributes:
+      label: Printable width in dots, and how you know
+      description: |
+        Measured beats read. The self-test ticket (hold FEED while switching on) usually prints a "Char/Line" figure — ESC/POS font A is 12 dots wide, so 42 columns means 504 dots and rules out 576. See docs/10-escpos.md §1.
+      placeholder: 512, from "42 Char/Line" on the self-test
+    validations:
+      required: true
+
+  - type: textarea
+    id: profile
+    attributes:
+      label: What you changed
+      description: The profile you added or edited in `worker/src/profiles.js`, if any. Paste it — that is the part somebody else can use.
+      render: javascript
+
+  - type: input
+    id: tear
+    attributes:
+      label: Head to tear bar, in mm
+      description: Optional, and only if you measured it. Print a mark with no feed, tear normally, measure from the mark to the torn edge — this is the one measurement where a torn edge is the right place to start.
