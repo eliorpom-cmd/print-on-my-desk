@@ -40,7 +40,7 @@ for (let i = 0; i < args.length; i++) {
 }
 const text = words.join(" ");
 if (!text) {
-  console.error('usage: node tools/dump_bitmap.mjs "votre texte" [--roll-tail] [--out fichier.bin]');
+  console.error('usage: node tools/dump_bitmap.mjs "your text" [--roll-tail] [--out file.bin]');
   process.exit(1);
 }
 
@@ -87,7 +87,7 @@ if (invert) {
 const ink = bytes.reduce((n, b) => n + b.toString(2).split("1").length - 1, 0);
 
 writeFileSync(out, bytes);
-console.log(`${out}: ${lines} lignes, ${bytes.length} octets, crc8 0x${crc8(bytes).toString(16).padStart(2, "0")}`);
-console.log(`encre: ${ink} points, ${(100 * ink / (lines * WIDTH_BYTES * 8)).toFixed(1)} %`);
-console.log(`lignes blanches en tete (imprimees en premier): ${rollTail ? head + tail : head}`);
-console.log(`lignes blanches en queue (imprimees en dernier): ${rollTail ? 0 : tail}`);
+console.log(`${out}: ${lines} lines, ${bytes.length} bytes, crc8 0x${crc8(bytes).toString(16).padStart(2, "0")}`);
+console.log(`ink: ${ink} dots, ${(100 * ink / (lines * WIDTH_BYTES * 8)).toFixed(1)} %`);
+console.log(`blank lines at the head (printed first): ${rollTail ? head + tail : head}`);
+console.log(`blank lines at the tail (printed last): ${rollTail ? 0 : tail}`);

@@ -148,7 +148,7 @@ SKIP = {0xAD}
 def render_glyph(font, ch, cell_width, height, baseline, threshold):
     """Rasterises one character into a list of row bitmasks, bit 0 = leftmost.
 
-    cell_width can exceed the advance: a few glyphes (%, oe, ae) are drawn
+    cell_width can exceed the advance: a few glyphs (%, oe, ae) are drawn
     slightly wider than the pitch they occupy, which is ordinary typography.
     Since the blitter ORs pixels and steps by the advance, letting the bitmap
     be wider makes neighbours overlap by a pixel instead of losing one.
@@ -335,24 +335,24 @@ def main():
     atlas["fold"] = fold_table()
 
     print("%s %dpx" % (atlas["name"], atlas["size"]))
-    print("  chasse   : %d px  ->  %d caracteres par ligne"
+    print("  advance  : %d px  ->  %d characters per line"
           % (atlas["advance"], atlas["columns"]))
     if atlas["cellWidth"] != atlas["advance"]:
-        print("  cellule  : %d px, soit %d de debordement assume sur la chasse"
+        print("  cell     : %d px, so %d px of deliberate overhang past the advance"
               % (atlas["cellWidth"], atlas["cellWidth"] - atlas["advance"]))
-    print("  hauteur  : %d px (baseline %d)" % (atlas["height"], atlas["baseline"]))
-    print("  glyphes  : %d" % len(atlas["glyphs"]))
+    print("  height   : %d px (baseline %d)" % (atlas["height"], atlas["baseline"]))
+    print("  glyphs   : %d" % len(atlas["glyphs"]))
     if overhangs:
-        print("  ATTENTION: %d glyphes debordent de la cellule et seront rognes:"
+        print("  WARNING: %d glyph(s) overflow the cell and will be clipped:"
               % len(overhangs))
         print("    " + " ".join("%r" % ch for _, ch in overhangs[:20]))
     else:
-        print("  aucun glyphe ne deborde de sa cellule")
+        print("  no glyph overflows its cell")
 
     empty = [c for c, rows in atlas["glyphs"].items()
              if c != 0x20 and c != 0xA0 and not any(rows)]
     if empty:
-        print("  ATTENTION: glyphes vides: "
+        print("  WARNING: empty glyphs: "
               + " ".join("U+%04X %r" % (c, chr(c)) for c in empty))
 
     # Serialise glyph rows as compact strings rather than JSON arrays of ints:
@@ -378,8 +378,8 @@ def main():
     json_path.parent.mkdir(exist_ok=True)
     json_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
 
-    print("  ecrit    : %s (%.1f Ko)" % (js_path.relative_to(ROOT), js_path.stat().st_size / 1024))
-    print("             %s (%.1f Ko)" % (json_path.relative_to(ROOT), json_path.stat().st_size / 1024))
+    print("  wrote    : %s (%.1f kB)" % (js_path.relative_to(ROOT), js_path.stat().st_size / 1024))
+    print("             %s (%.1f kB)" % (json_path.relative_to(ROOT), json_path.stat().st_size / 1024))
 
     # And then the copy the BROWSER reads, which is neither of the two above.
     #
@@ -397,11 +397,11 @@ def main():
         try:
             subprocess.run(["node", str(sync)], cwd=ROOT, check=True,
                            stdout=subprocess.DEVNULL)
-            print("             web/lib/font-atlas.js (par tools/sync_web.mjs)")
+            print("             web/lib/font-atlas.js (via tools/sync_web.mjs)")
         except (OSError, subprocess.CalledProcessError) as err:
             print()
-            print("  ATTENTION: la copie du navigateur n'a pas ete regeneree (%s)." % err)
-            print("             L'apercu montrerait encore l'ancienne police.")
+            print("  WARNING: the browser copy was not regenerated (%s)." % err)
+            print("             The preview would still show the old font.")
             print("             Lance :  node tools/sync_web.mjs")
 
     if args.preview:

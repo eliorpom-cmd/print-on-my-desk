@@ -6,13 +6,13 @@
 // renderer, so what you see is what the printer would receive, bit for bit -
 // the CRC it prints is the one the printer would echo back.
 //
-//   node tools/preview.mjs "Bonjour"            -> ticket.png
-//   node tools/preview.mjs --ascii "Bonjour"    -> to the terminal
+//   node tools/preview.mjs "Hello"              -> ticket.png
+//   node tools/preview.mjs --ascii "Hello"      -> to the terminal
 //   node tools/preview.mjs --probe 32           -> the transport test pattern
 //   node tools/preview.mjs --out /tmp/x.png "Texte"
 //   node tools/preview.mjs --profile mxw01 "x"  -> le ticket 58 mm, en pause
 //
-// Sans --profile, l'imprimante en service : la TRP 100 III depuis le 31 aout.
+// With no --profile, the printer in service: the TRP 100 III since 31 August.
 
 import { deflateSync } from "node:zlib";
 import { writeFileSync } from "node:fs";
@@ -95,7 +95,7 @@ const args = process.argv.slice(2);
 //
 // This used to decide by looking at the next argument: if it did not start
 // with "--", it was taken as the flag's value and removed. So the usage in the
-// header of this file, `preview.mjs --ascii "Bonjour"`, ate its own message
+// header of this file, `preview.mjs --ascii "Hello"`, ate its own message
 // and quietly previewed the default text instead - a bad failure in a tool
 // whose whole job is to show exactly what will be printed.
 const BOOLEAN = new Set(["--ascii"]);
@@ -116,7 +116,7 @@ const ascii = flag("--ascii") !== null;
 const probe = flag("--probe");
 const out = flag("--out") ?? "ticket.png";
 const profile = profileFor(flag("--profile") ?? CURRENT_PROFILE);
-const text = args.join(" ") || "Bonjour, ceci est un ticket de test.";
+const text = args.join(" ") || "Hello, this is a test ticket.";
 
 const canvas = probe
   ? renderProbe(Number(probe) || 32, profile)
@@ -135,18 +135,18 @@ const crc = canvas.crc8();
 if (profile.flip180 && !probe) canvas.rotate180();
 
 console.log(
-  `${profile.label}: ${canvas.height} lignes, ` +
-    `${canvas.height * profile.widthBytes} octets, ` +
+  `${profile.label}: ${canvas.height} lines, ` +
+    `${canvas.height * profile.widthBytes} bytes, ` +
     `crc8 0x${crc.toString(16).padStart(2, "0")}`
 );
 console.log(
-  `environ ${(canvas.height / profile.dotsPerMm).toFixed(1)} mm de papier ` +
-    `a ${profile.dotsPerMm.toFixed(2)} points/mm`
+  `about ${(canvas.height / profile.dotsPerMm).toFixed(1)} mm of paper ` +
+    `at ${profile.dotsPerMm.toFixed(2)} dots/mm`
 );
 
 if (ascii) {
   console.log(canvas.toAscii("#", " "));
 } else {
   writeFileSync(out, toPng(canvas));
-  console.log(`ecrit dans ${out}`);
+  console.log(`wrote ${out}`);
 }

@@ -63,5 +63,5 @@ if (check) {
     console.error(`\n${stale} copie(s) perimee(s). Lancer: node tools/sync_web.mjs`);
     process.exit(1);
   }
-  console.log("web/lib est a jour");
+  console.log("web/lib is up to date");
 }
