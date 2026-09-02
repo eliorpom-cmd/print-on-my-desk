@@ -16,21 +16,31 @@ Budget an hour, most of it waiting.
 
 ## 1 · Which printer, which cable
 
-Two paths from here, and they use different code in this repository:
+Both kinds work, and they are one line of config apart:
 
-| Your printer | Connected by | Use |
+| Your printer | Connected by | `PRINTER =` |
 | :-- | :-- | :-- |
-| A proper receipt printer (ESC/POS, 80 mm) | USB | `agent/` — this page |
-| A cheap 58 mm Bluetooth one | Bluetooth | `agent/` won't do it; see below |
+| A receipt printer (ESC/POS, 80 mm) | USB | `"escpos"` |
+| The cheap 58 mm Bluetooth one | Bluetooth | `"ble"` |
 
-`agent/` speaks **ESC/POS over USB**. That covers essentially every till
-printer ever made and most of the 80 mm ones sold for point-of-sale.
+The agent is the same above that line: the same queue, the same long poll, the
+same heartbeat, the same refusal to claim work it cannot print. Only the driver
+underneath changes.
 
-If yours is the little Bluetooth kind, the Pi can still drive it, but through
-the Bluetooth protocol rather than USB — the code for that is `firmware/`,
-written for a microcontroller. Running it on a Pi means porting it to `bleak`,
-which is a genuine afternoon of work and not documented here. **If you have the
-Bluetooth printer, the browser bridge is the supported answer.**
+**For Bluetooth you also need a radio and one package:**
+
+```sh
+pip3 install --break-system-packages bleak
+```
+
+A Raspberry Pi Zero 2 W, a 3, 4 or 5 all have Bluetooth built in. An old
+desktop probably does not; a €10 USB dongle fixes that.
+
+**And one thing that is not software.** The 58 mm printer stops advertising
+after about ten minutes with no Bluetooth connection, and then nothing wakes it
+but its own button. The agent holds a connection open for exactly that reason,
+which means it must keep running — if you stop it overnight, somebody has to
+press the button in the morning. The USB printer has no such behaviour.
 
 ## 2 · Set up the machine
 
@@ -52,13 +62,13 @@ cd print-on-my-desk
 bash agent/install.sh
 ```
 
-It asks three things — your Worker's address, your `PRINTER_TOKEN`, and a name
+It asks four things — your Worker's address, your `PRINTER_TOKEN`, and a name
 for this machine — and does everything else. It is safe to run again if a step
 fails.
 
 The one part it cannot do for you is the USB permission rule, because it needs
 your printer's ids. It prints `lsusb` output and tells you exactly what to
-edit.
+edit. On Bluetooth there is no rule to install — skip that step entirely.
 
 > **"No backend available"** is the error you get when `libusb` is missing. It
 > mentions neither USB nor libusb. `install.sh` installs it; if you are doing
@@ -67,8 +77,20 @@ edit.
 ## 4 · Check the printer before starting anything
 
 ```sh
-python3 agent/diagnose.py
+python3 agent/diagnose.py          # USB
 ```
+
+On Bluetooth, ask the printer what it thinks — with it switched **on**:
+
+```sh
+python3 -c "
+import sys; sys.path.insert(0, 'agent')
+import ble_printer as bp
+p = bp.MXW01(); p.open(); print(p.status()); p.close()"
+```
+
+You should get a dictionary with `paper`, a temperature and a supply reading.
+`no MXW01 on the air` means it is off or asleep: press its button.
 
 This finds the printer, asks it what it is, and prints a test ticket. Do this
 before starting the service: a service that fails at boot is much harder to

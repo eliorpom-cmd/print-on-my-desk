@@ -39,7 +39,6 @@ import signal
 import sys
 import time
 
-import escpos_printer as ep
 import net
 
 try:
@@ -50,7 +49,35 @@ except ImportError:
     )
 
 
-PROFILE = "trp100"
+# Which printer this box is plugged into, and therefore which driver.
+#
+# Two machines, two buses, two profiles, and ONE loop above them: everything
+# from here down is about the queue, the network and the paper, none of which
+# cares how the bytes reach the head.
+#
+#   escpos   an 80 mm receipt printer over USB. The default, because it is what
+#            this project runs on.
+#   ble      the 58 mm Bluetooth one, over bleak. Needs `pip install bleak`.
+#
+# The two driver modules export the same names on purpose - the same four
+# exceptions, the same WIDTH_BYTES, the same methods - so that the alternative
+# to this dictionary would be branching in nine places, and one of them would
+# eventually be forgotten.
+DRIVERS = {
+    "escpos": ("escpos_printer", "TRP100", "trp100"),
+    "ble": ("ble_printer", "MXW01", "mxw01"),
+}
+
+DRIVER = getattr(config, "PRINTER", "escpos")
+if DRIVER not in DRIVERS:
+    raise SystemExit(
+        "config.PRINTER is %r; it has to be one of %s"
+        % (DRIVER, ", ".join(sorted(DRIVERS)))
+    )
+
+_module, _cls, PROFILE = DRIVERS[DRIVER]
+ep = __import__(_module)
+PrinterClass = getattr(ep, _cls)
 
 # How long to hold /api/machine/next open waiting for work. The Worker clamps
 # this to 25 s; asking for more is not an error, it just does not happen.
@@ -429,10 +456,15 @@ def main():
     parser.add_argument("--batch", type=int, default=getattr(config, "BATCH_SIZE", 8))
     args = parser.parse_args()
 
-    printer = ep.TRP100(
-        vendor_id=getattr(config, "USB_VENDOR_ID", None),
-        product_id=getattr(config, "USB_PRODUCT_ID", None),
-    )
+    # Each driver takes what its own bus needs and ignores the rest, so the
+    # config file can carry both without either complaining.
+    if DRIVER == "ble":
+        printer = PrinterClass(address=getattr(config, "BLE_ADDRESS", None))
+    else:
+        printer = PrinterClass(
+            vendor_id=getattr(config, "USB_VENDOR_ID", None),
+            product_id=getattr(config, "USB_PRODUCT_ID", None),
+        )
     api = net.Api(config.WORKER_URL, config.PRINTER_TOKEN, config.DEVICE_ID, PROFILE)
 
     # --status and --probe are the first two things anybody runs, and a Python

@@ -18,6 +18,12 @@ ask() { local prompt="$1" var="$2" current="${3:-}"; local answer
         read -r -p "$prompt${current:+ [$current]}: " answer
         printf -v "$var" '%s' "${answer:-$current}"; }
 
+say "0/5  Which printer"
+echo "  1) An 80 mm receipt printer, over USB   (ESC/POS)"
+echo "  2) The 58 mm Bluetooth one             (MXW01 and its many names)"
+ask "Which one" PRINTER_CHOICE "1"
+if [ "$PRINTER_CHOICE" = "2" ]; then DRIVER=ble; else DRIVER=escpos; fi
+
 say "1/5  System packages"
 # libusb is NOT pulled in by pip. pyusb is only the bindings; libusb is what
 # talks to the bus. Without it the single error you get is "No backend
@@ -27,6 +33,12 @@ sudo apt-get install -y python3-pip git libusb-1.0-0
 
 say "2/5  Python dependencies"
 pip3 install --break-system-packages -r "$HERE/requirements.txt"
+if [ "$DRIVER" = "ble" ]; then
+  # Not in requirements.txt on purpose: a USB printer has no business pulling
+  # in a Bluetooth stack, and ble_printer.py imports it inside a try/except so
+  # that the tests run on a machine that has never had a radio.
+  pip3 install --break-system-packages bleak
+fi
 
 say "3/5  Configuration"
 if [ -f "$HERE/config.py" ]; then
@@ -37,6 +49,7 @@ else
   ask "A name for this machine" DEVICE_ID "$(hostname)"
   cat > "$HERE/config.py" <<PY
 # Written by install.sh. This file is gitignored: it holds a secret.
+PRINTER = "$DRIVER"
 WORKER_URL = "${WORKER_URL%/}"
 PRINTER_TOKEN = "$PRINTER_TOKEN"
 DEVICE_ID = "$DEVICE_ID"
@@ -46,7 +59,11 @@ PY
 fi
 
 say "4/5  USB permissions"
-if [ -f /etc/udev/rules.d/99-thermal-printer.rules ]; then
+if [ "$DRIVER" = "ble" ]; then
+  echo "Bluetooth: nothing to install here."
+  echo "If a scan finds nothing, check the printer is ON - it sleeps after ten"
+  echo "minutes and only its own button wakes it."
+elif [ -f /etc/udev/rules.d/99-thermal-printer.rules ]; then
   echo "udev rule already installed."
 else
   echo "Your printer's USB ids, from lsusb:"
@@ -75,4 +92,8 @@ echo "  sudo systemctl enable --now printer-agent"
 echo "  journalctl -u printer-agent -f"
 echo
 echo "Or check the printer first, without starting anything:"
-echo "  python3 agent/diagnose.py"
+if [ "$DRIVER" = "ble" ]; then
+  echo "  python3 -c \"import sys; sys.path.insert(0,'agent'); import ble_printer as b; p=b.MXW01(); p.open(); print(p.status())\""
+else
+  echo "  python3 agent/diagnose.py"
+fi

@@ -81,3 +81,115 @@ def row(*first_bytes):
     for i, value in enumerate(first_bytes):
         buf[i] = value
     return bytes(buf)
+
+
+# --- the Bluetooth printer --------------------------------------------------
+#
+# Same idea as FakePrinter above, one bus lower: FakeBle replaces bleak's
+# client, not the driver. Everything in ble_printer.py above the two
+# write_gatt_char calls - the framing, the checksum, the order of the pre-print
+# checks, the pacing and its backoff - is the code that will run against a real
+# printer. Only the radio is fiction.
+
+import ble_printer as bp
+
+
+class FakeBleClient:
+    """A stand-in for bleak's client that answers like an MXW01.
+
+    `paper`, `temperature` and `error` set what the printer will claim about
+    itself. `crc_error` makes it report a checksum that does not match what it
+    was sent, which is the one failure that has to be caught rather than
+    trusted - see print_lines.
+    """
+
+    def __init__(self, driver, paper=True, temperature=25, error=0,
+                 crc_error=False, silent=False, stall_every=0):
+        self.driver = driver
+        self.paper = paper
+        self.temperature = temperature
+        self.error = error
+        self.crc_error = crc_error
+        # A printer that is connected and says nothing. Distinct from one that
+        # is not there: the driver has to time out rather than hang.
+        self.silent = silent
+        # Raise on every nth data write, so the retry and the pacing backoff
+        # are exercised without a radio.
+        self.stall_every = stall_every
+
+        self.is_connected = False
+        self.data = bytearray()
+        self.control = []
+        self.writes = 0
+        self._image_crc = 0
+        self._announced = 0
+
+    async def connect(self):
+        self.is_connected = True
+
+    async def disconnect(self):
+        self.is_connected = False
+
+    async def start_notify(self, _char, _handler):
+        return None
+
+    async def write_gatt_char(self, char, data, response=False):
+        if char == bp.CHAR_DATA:
+            self.writes += 1
+            if self.stall_every and self.writes % self.stall_every == 0:
+                raise OSError("the queue is full")
+            self.data.extend(data)
+            self._image_crc = bp.crc8(data, self._image_crc)
+            return
+        self.control.append(bytes(data))
+        if not self.silent:
+            self._answer(bytes(data))
+
+    def _answer(self, frame):
+        cmd, payload = bp.parse_notification(frame)
+        if cmd == bp.CMD_STATUS:
+            self._notify(cmd, self._status_payload())
+        elif cmd == bp.CMD_PRINT:
+            self._announced = payload[0] | (payload[1] << 8)
+            self._notify(cmd, bytes([0x00]))
+        elif cmd == bp.CMD_FEED:
+            self._notify(cmd, bytes([0x00]))
+        elif cmd == bp.CMD_FLUSH:
+            reported = (self._image_crc + 1) & 0xFF if self.crc_error else self._image_crc
+            self._notify(bp.CMD_PRINT_DONE, bytes([0x00, reported, reported]))
+
+    def _status_payload(self):
+        # Ten bytes, laid out at the offsets docs/PROTOCOL.md gives: state,
+        # then two spare, then supply, temperature, spare, error flag, two
+        # spare, paper.
+        p = bytearray(10)
+        p[0] = 0x00
+        p[3] = 0x64
+        p[4] = self.temperature & 0xFF
+        p[6] = self.error & 0xFF
+        p[9] = 0x00 if self.paper else 0x07
+        return bytes(p)
+
+    def _notify(self, cmd, payload):
+        self.driver._on_notify(None, bp.build_frame(cmd, payload))
+
+
+class FakeMXW01(bp.MXW01):
+    """The real driver, with a bytearray where the radio should be."""
+
+    def __init__(self, **kwargs):
+        client = kwargs.pop("client", None)
+        super().__init__()
+        self._fake = client
+        self._fake_kwargs = kwargs
+
+    async def _connect(self):
+        if self._fake is None:
+            self._fake = FakeBleClient(self, **self._fake_kwargs)
+        await self._fake.connect()
+        await self._fake.start_notify(bp.CHAR_NOTIFY, self._on_notify)
+        self._client = self._fake
+
+    @property
+    def bus(self):
+        return self._fake

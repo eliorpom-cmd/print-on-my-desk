@@ -3,3 +3,14 @@
 # is the standard library, on purpose: this runs unattended on a box in a flat,
 # and every package added is a package to keep up to date there.
 pyusb>=1.2
+
+# For PRINTER = "ble" only, and not installed by default.
+#
+# bleak is the cross-platform Bluetooth Low Energy library: CoreBluetooth on
+# macOS, BlueZ on Linux, WinRT on Windows. It is a real dependency tree, and a
+# USB printer has no business pulling it in - which is why ble_printer.py
+# imports it inside a try/except and says so plainly if it is missing.
+#
+#   pip install bleak
+#
+# bleak>=0.22

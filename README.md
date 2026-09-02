@@ -44,7 +44,7 @@ happens when a link goes round and five thousand messages arrive in a day.
 | | You need | Runs when | Set-up |
 | :-- | :-- | :-- | :-- |
 | **Browser** | A cheap Bluetooth thermal printer, and Chrome | A tab is open | **~30 min** |
-| **Always-on** | A Raspberry Pi or any computer you leave on, and a USB or Bluetooth printer | Always | ~1 hour |
+| **Always-on** | A Raspberry Pi or any computer you leave on, and either kind of printer | Always | ~1 hour |
 | **Microcontroller** | A Pico 2 W, soldering optional | Always, on 2 W of power | An afternoon |
 
 **Start with the browser version.** It is the one where you can see the whole

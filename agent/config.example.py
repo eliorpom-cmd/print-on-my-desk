@@ -3,6 +3,17 @@
 # The same split as firmware/config.example.py, and for the same reason: the
 # token belongs to the machine, not to the repository.
 
+# WHICH PRINTER THIS BOX IS PLUGGED INTO, and therefore which driver.
+#
+#   "escpos"  an 80 mm receipt printer over USB. The default.
+#   "ble"     the 58 mm Bluetooth one, over Bluetooth Low Energy. Needs
+#             `pip install bleak`, and needs the machine to have a radio.
+#
+# Everything else in this file applies to both, except the two blocks that say
+# otherwise. The agent picks the driver, the profile and the paper width from
+# this one line - see DRIVERS in main.py.
+PRINTER = "escpos"
+
 # The deployed Worker. No trailing slash.
 WORKER_URL = "https://YOUR-WORKER.workers.dev"
 
@@ -37,6 +48,20 @@ BATCH_SIZE = 8
 # announced. `lsusb` gives them when you do need them.
 USB_VENDOR_ID = None
 USB_PRODUCT_ID = None
+
+# --- PRINTER = "ble" only ----------------------------------------------------
+
+# Pin one printer by its Bluetooth address, when there is more than one in the
+# flat. None means "the first MXW01 that answers a scan", which is right almost
+# always.
+#
+# Worth knowing before you set it: a Bluetooth address is not portable. Linux
+# gives you the real one, macOS hands out a per-host UUID that is meaningless
+# on any other machine, and both change if the printer is re-paired. Leave it
+# None unless a scan genuinely finds two.
+BLE_ADDRESS = None
+
+# --- PRINTER = "escpos" only -------------------------------------------------
 
 # Which buzzer command to try on a priority ticket. 0=ESC B, 1=BEL, 2=ESC ( A,
 # 3=ESC p (cash-drawer kick).
