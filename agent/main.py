@@ -176,7 +176,7 @@ class Agent:
             # a device that is not there cannot be asked why. So the message
             # names all three, and whoever reads it can look at the machine.
             self.printer_state = "offline"
-            self.last_error = "imprimante injoignable (papier, capot ou cable) - %s" % (
+            self.last_error = "printer unreachable (paper, lid or cable) - %s" % (
                 str(err)[:80]
             )
             return

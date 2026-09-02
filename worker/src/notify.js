@@ -249,8 +249,8 @@ const statusHook = (env) => env.STATUS_DISCORD_WEBHOOK || env.DISCORD_WEBHOOK;
 export function notifyPrintFailed(env, id, reason, attempts) {
   return alert(
     env,
-    `**Ticket #${id} n'imprimera pas.** ${attempts} tentatives, derniere erreur : \`${reason ?? "inconnue"}\`. ` +
-      `Il est en \`failed\` et n'attend plus rien : le bouton Reimprimer du bureau le remet en file.`,
+    `**Ticket #${id} will not print.** ${attempts} attempts, last error: \`${reason ?? "unknown"}\`. ` +
+      `It is \`failed\` and waiting for nothing: the Reprint button on the desk puts it back in the queue.`,
     statusHook(env)
   );
 }
@@ -265,8 +265,8 @@ export function notifyPrintFailed(env, id, reason, attempts) {
 export function notifyNoPaper(env, waiting) {
   return alert(
     env,
-    `**Plus de papier.** ${waiting} message${waiting > 1 ? "s attendent" : " attend"} que le rouleau soit recharge. ` +
-      `Rien n'est perdu : la machine refuse de reclamer un job qu'elle ne peut pas imprimer.`,
+    `**Out of paper.** ${waiting} message${waiting > 1 ? "s are waiting" : " is waiting"} for the roll to be changed. ` +
+      `Nothing is lost: the machine refuses to claim work it cannot print.`,
     statusHook(env)
   );
 }

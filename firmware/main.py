@@ -280,7 +280,7 @@ class Service:
                 # written, so the status page knows the roll is empty before
                 # the next message arrives rather than after it is destroyed.
                 self.printer_state = "no_paper"
-                self.last_error = "plus de papier"
+                self.last_error = "out of paper"
                 log("keepalive", temperature=self.temperature, paper=False)
                 return False
             log("keepalive", temperature=self.temperature, battery=self.battery)
@@ -402,12 +402,12 @@ class Service:
             # Worker can put it back, and the state stops the loop claiming
             # another one until someone reloads the roll.
             self.printer_state = "no_paper"
-            self.last_error = "plus de papier"
+            self.last_error = "out of paper"
             self.prints_failed += 1
             log("print_failed", id=job_id, error="no_paper")
             self.pending_done = {
                 "job_id": job_id, "ids": job_ids, "ok": False, "crc": None,
-                "error": "plus de papier", "retry": True,
+                "error": "out of paper", "retry": True,
                 "sent": 0, "spans": spans,
             }
             return False

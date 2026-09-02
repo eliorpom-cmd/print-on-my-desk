@@ -378,7 +378,7 @@ async function alertOnBurst(env, ctx) {
   await notifyPrintFailed(
     env,
     0,
-    `${n} echecs d'impression en ${BURST_WINDOW_MS / 60000} minutes - quelque chose ne va pas`,
+    `${n} print failures in ${BURST_WINDOW_MS / 60000} minutes - something is wrong`,
     n
   );
 }

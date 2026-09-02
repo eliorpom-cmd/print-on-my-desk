@@ -675,7 +675,7 @@ export const ADMIN_PAGE = String.raw`<!doctype html>
         if (!find.owned) renderRecent(data.recent);
         var stuck = data.recent.filter(function (j) { return j.status === "failed"; }).length;
         $("stuck").textContent = stuck
-          ? stuck + " ticket" + (stuck > 1 ? "s" : "") + " n'imprimera pas. Reprint le remet en file."
+          ? stuck + " ticket" + (stuck > 1 ? "s" : "") + " will not print. Reprint puts it back in the queue."
           : "";
         enumOptions.printer_profile = data.profiles || [];
         renderSettings(data.settings);
