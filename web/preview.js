@@ -10,83 +10,41 @@
 //
 // So there is no second typeface. The textarea on top of this canvas is
 // transparent, and the only rendering of anybody's words on this page is the
-// one the print head would lay down: same atlas, same blitter, same 384 dots
+// one the print head would lay down: same atlas, same blitter, same dots
 // across, same one bit deep. What you see is the ticket.
 //
 // It follows that changing the ticket font changes the page, which is the
-// point. `python tools/build_font.py --preset typewriter` then
-// `node tools/sync_web.mjs`, and this file needs no edit: it never names a
-// font, a size or a column count, it asks the atlas.
+// point. `python tools/build_font.py --preset typewriter` and this file needs
+// no edit: it never names a font, a size or a column count, it asks the atlas.
 //
-// app.js owns the form, the submit and the printing animation. This file only
-// draws, and the two never touch the same element.
+// The rendering itself lives in web/ticket.js, with the social card's, because
+// drawing a ticket for a person has a rule that must not be forgotten and this
+// file forgot it once. app.js owns the form, the submit and the printing
+// animation; this file only draws, and the two never touch the same element.
 
-import { renderTicket, charsPerLine } from "./lib/render.js";
-import { CURRENT_PROFILE, profileFor } from "./lib/profiles.js";
+import { charsPerLine } from "./lib/render.js";
+import { PROFILE, renderForScreen, paint, INK, FAINT } from "./ticket.js";
 
 const canvas = document.getElementById("preview");
 const input = document.getElementById("text");
 const cols = document.getElementById("gauge-cols");
 const mm = document.getElementById("gauge-mm");
 if (canvas && input) {
-  const ctx = canvas.getContext("2d");
-  // CURRENT_PROFILE is the KEY ("trp100"), not the profile. Passing the
-  // string straight through gives a profile with no dotsPerMm and every
-  // measurement on the page reads NaN.
-  const profile = profileFor(CURRENT_PROFILE);
-  const COLUMNS = charsPerLine(profile);
+  const COLUMNS = charsPerLine(PROFILE);
 
   // Shown on an empty sheet. Not a label sitting over the paper in some other
   // font - it is drawn in the dots too, faintly, so that the first thing
   // anybody sees is already the truth about what this machine does.
   const EMPTY = "Type here. These are the printer's own dots, not a font that looks like them.";
 
-  /** Paints a rendered canvas at `ink` on `stock`, one bit deep. */
-  function paint(rendered, ink, stock) {
-    const width = rendered.widthPixels;
-    const height = Math.max(rendered.height, 1);
-    canvas.width = width;
-    canvas.height = height;
-    // The sheet keeps the paper's own proportions whatever the font's line
-    // height turns out to be; CSS gives it the width.
-    canvas.style.aspectRatio = `${width} / ${height}`;
-    const image = ctx.createImageData(width, height);
-    const data = image.data;
-    for (let y = 0; y < height; y++) {
-      const row = rendered.rows[y];
-      for (let x = 0; x < width; x++) {
-        const on = row && row[x >> 3] & (1 << (x & 7));
-        const [r, g, b] = on ? ink : stock;
-        const i = (y * width + x) * 4;
-        data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = 255;
-      }
-    }
-    ctx.putImageData(image, 0, 0);
-  }
-
-  const STOCK = [244, 243, 238];   // --stock
-  const INK = [20, 20, 15];        // --stock-ink
-  const FAINT = [201, 199, 190];   // the empty sheet's prompt
-
   function draw() {
     const text = input.value;
     const empty = !text.trim();
-    // renderTicket is the Worker's own, so the preview carries the header, the
-    // rule and the spacing the real ticket has. A preview of only the body
-    // would be a preview of something nobody receives.
-    const rendered = renderTicket(empty ? EMPTY : text, {
-      id: 0,
-      createdAt: Date.now(),
-      profile,
-    });
-    // The MXW01's buffer is rendered PRE-ROTATED, because its head is mounted
-    // upside down and the bytes go to the head, not to a person. Undo it here
-    // or the preview comes out mirrored and unreadable - which is exactly what
-    // it did the first time this file met a flip180 profile. app.js does the
-    // same thing at the same point for the printed ticket; profiles with no
-    // rotation, like the TRP 100 III, have nothing to undo.
-    if (profile.flip180) rendered.rotate180();
-    paint(rendered, empty ? FAINT : INK, STOCK);
+    // renderForScreen is the Worker's own renderer, so the preview carries the
+    // header, the rule and the spacing the real ticket has. A preview of only
+    // the body would be a preview of something nobody receives.
+    const rendered = renderForScreen(empty ? EMPTY : text);
+    paint(canvas, rendered, { ink: empty ? FAINT : INK });
 
     if (cols) {
       const longest = empty ? 0 : Math.max(...text.split("\n").map((l) => l.length));
@@ -97,7 +55,7 @@ if (canvas && input) {
       // 203 dpi is eight dots to the millimetre. This number is not decorative:
       // it is what the message costs off somebody's roll.
       const dots = empty ? 0 : rendered.height;
-      mm.textContent = `${(dots / profile.dotsPerMm).toFixed(1)} mm of paper`;
+      mm.textContent = `${(dots / PROFILE.dotsPerMm).toFixed(1)} mm of paper`;
     }
   }
 

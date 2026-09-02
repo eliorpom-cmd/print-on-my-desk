@@ -58,7 +58,16 @@ PRESETS = {
     "code": {
         "file": "GoogleSansCode-Regular.ttf",
         "url": "https://github.com/google/fonts/raw/main/ofl/googlesanscode/GoogleSansCode%5Bwght%5D.ttf",
-        "size": 22,
+        # 20, not 22, and the difference is a whole column of text.
+        #
+        # The atlas actually committed in worker/src/font-atlas.js was built at
+        # 20 px, but this preset said 22 - so `--preset code`, the command the
+        # documentation gives, did not reproduce what was shipped. It rebuilt
+        # the font one pitch wider (12 px to 13), which is 30 characters per
+        # line on the 58 mm printer instead of 32, and dropped the pinned
+        # renderings in worker/test/profiles.test.mjs on the floor. Running the
+        # documented command should never be how you find that out.
+        "size": 20,
     },
     "terminal": {
         "file": "JetBrainsMono-Regular.ttf",

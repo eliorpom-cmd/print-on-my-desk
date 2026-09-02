@@ -150,6 +150,25 @@ A job in `printing` holds a lease. If the bridge dies mid-ticket the lease
 expires and the job is marked failed rather than reprinted — a duplicate is
 more confusing than a miss, and a miss can be asked for again.
 
+### Two rules about drawing a ticket, both already broken once
+
+**The bitmap is rendered for the print head, not for eyes.** The MXW01's head
+is mounted upside down, so its profile carries `flip180` and `renderTicket`
+returns a picture that is correct on paper and mirrored gibberish on a screen.
+Anything drawing a ticket for a person goes through `renderForScreen` in
+`web/ticket.js`, which undoes it. Do not add a fourth copy of that line: two of
+the three that existed had forgotten it, and neither author could see the bug,
+because both wrote against a profile that has no rotation.
+
+**The page must preview the printer that actually prints.** `CURRENT_PROFILE`
+in `worker/src/profiles.js` and `PROFILE` in `web/bridge/bridge.js` are the
+same machine seen from two ends. When they disagreed, the page showed a
+512-dot ticket at 36 columns while the bridge printed a 384-dot one at 28, and
+nothing failed — the preview was simply of a different printer.
+
+`worker/test/screen-render.test.mjs` holds both. If you change the profile, the
+rotation, or where a ticket gets drawn, read it first.
+
 ---
 
 ## If something is wrong with this file

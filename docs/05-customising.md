@@ -49,8 +49,8 @@ are set up for you:
 
 ```sh
 python3 tools/build_font.py --preset terminal    # taller, denser — WHAT SHIPS
-python3 tools/build_font.py --preset code        # even, modern
-python3 tools/build_font.py --preset typewriter  # looks like a receipt
+python3 tools/build_font.py --preset code        # even, modern, one column wider
+python3 tools/build_font.py --preset typewriter  # looks like a receipt, two narrower
 ```
 
 **This changes the site, not just the paper.** The headline stays as it is, but

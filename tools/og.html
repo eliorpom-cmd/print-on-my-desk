@@ -64,36 +64,21 @@
 </div>
 
 <script type="module">
-  import { renderTicket } from "/lib/render.js";
-  import { CURRENT_PROFILE, profileFor } from "/lib/profiles.js";
+  // Same door as the page: web/ticket.js renders the right way up and paints
+  // it. The card would otherwise be the third place to remember that the
+  // MXW01's buffer is upside down, and the third place to forget.
+  import { PROFILE, renderForScreen, paint } from "/ticket.js";
   import ATLAS from "/lib/font-atlas.js";
 
-  const profile = profileFor(CURRENT_PROFILE);
-  const rendered = renderTicket(
+  const rendered = renderForScreen(
     "Somebody you have never met typed this, and a machine in a flat printed it.",
-    { id: 410, createdAt: Date.parse("2026-09-02T21:47:00Z"), profile }
+    { id: 410, createdAt: Date.parse("2026-09-02T21:47:00Z") }
   );
-  // Pre-rotated for a head mounted upside down. A card is looked at by people,
-  // so undo it - the same line web/app.js and web/preview.js each carry.
-  if (profile.flip180) rendered.rotate180();
-  const cv = document.getElementById("cv");
-  cv.width = rendered.widthPixels;
-  cv.height = Math.max(rendered.height, 1);
-  const ctx = cv.getContext("2d");
-  const img = ctx.createImageData(cv.width, cv.height);
-  for (let y = 0; y < cv.height; y++) {
-    const row = rendered.rows[y];
-    for (let x = 0; x < cv.width; x++) {
-      const on = row && row[x >> 3] & (1 << (x & 7));
-      const i = (y * cv.width + x) * 4;
-      const v = on ? [20, 20, 15] : [244, 243, 238];
-      img.data[i] = v[0]; img.data[i + 1] = v[1]; img.data[i + 2] = v[2]; img.data[i + 3] = 255;
-    }
-  }
-  ctx.putImageData(img, 0, 0);
+  paint(document.getElementById("cv"), rendered);
+
   // The card says which font it was built with, so a card that has drifted
   // from the site is visible rather than merely wrong.
   document.getElementById("meta").textContent =
-    `384 dots · 203 dpi · ${ATLAS.name}`;
+    `${PROFILE.widthPixels} dots \u00b7 203 dpi \u00b7 ${ATLAS.name}`;
   document.documentElement.dataset.ready = "1";
 </script>
