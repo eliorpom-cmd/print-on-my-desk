@@ -117,8 +117,8 @@ async function main() {
   if ((await run("git", ["fetch", "--quiet"])) !== 0) {
     stop(
       "Could not reach the repository.",
-      "That is usually the network, or a private repository you are no longer",
-      "signed in to. `git fetch` on its own will say which."
+      "That is usually the network. If you cloned a private fork, it can also",
+      "be a sign-in that has expired. `git fetch` on its own will say which."
     );
   }
 

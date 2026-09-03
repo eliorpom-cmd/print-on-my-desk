@@ -24,11 +24,8 @@ one printer, one link, and the people you send that link to.
 
 <div align="center">
 
-<img src="docs/images/ticket.jpg" alt="A message printing on a 58 mm thermal printer" width="420">
-<img src="docs/images/printer.jpg" alt="A printer surrounded by the tickets it has printed" width="420">
-
-<sub>Two photographs of the machine this documents. The third one that would
-help is a screenshot of the page on a phone — see docs/images/README.md.</sub>
+<img src="docs/images/ticket.jpg" alt="A message printing on a 58 mm thermal printer" width="352">
+<img src="docs/images/printer.jpg" alt="A printer surrounded by the tickets it has printed" width="352">
 
 </div>
 
