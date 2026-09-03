@@ -20,12 +20,14 @@
  * and the headline, the preview and the paper all change together, because
  * they were never three things.
  *
- * THE TOKENS. Change these nine values and it is a different site.
+ * THE TOKENS. Change these values and it is a different site.
  * `--paper` and `--ink` are the PAGE's ground and figure, not the physical
  * roll: /admin borrows this stylesheet and paints itself with them, so they
  * have to mean "background" and "text" or the desk comes out unreadable. The
  * actual thermal stock is `--stock`, and it stays light in every theme,
- * because paper does.
+ * because paper does - it is now used only where there IS paper: the social
+ * card in tools/og.html, and the ticket that comes out of the slot when
+ * something is really printed. The form is a form; see "the field" below.
  */
 
 :root {
@@ -42,7 +44,13 @@
   --off: #55585c;
   --slot: #3b3e42;
 
-  /* The roll. Light in every theme, because paper is. */
+  /* The field the message is typed into. A step up from the page, so the box
+     reads as somewhere to write without becoming an object in its own right.
+     web/ticket.js repeats this value; the two must agree. */
+  --field: #141518;
+
+  /* The roll. Light in every theme, because paper is - and it is now only
+     used where there is actually paper: the printing animation. */
   --stock: #f4f3ee;
   --stock-ink: #14140f;
 
@@ -127,34 +135,45 @@ h1 {
 .notes ul { margin: 0; padding-left: 1.1rem; }
 .notes li + li { margin-top: 0.35rem; }
 
-/* --- the sheet ------------------------------------------------------------
-   The only light object on the page, because on a desk it is the only light
-   object too. The textarea sits on top of it, invisible: the paper IS the
-   field, and the preview underneath is what the print head would lay down. */
+/* --- the field ------------------------------------------------------------
+   It was a sheet of paper until 3 September: a cream block with a torn edge,
+   the only light object on a dark page. Two things were wrong with it. It read
+   as decoration around the place you type rather than as the place itself, and
+   it spent the page's one big gesture before anything had happened - so when a
+   ticket really was printed, the animation of paper coming out of a slot had
+   nothing left to be a surprise about.
 
-.sheet-wrap { position: relative; background: var(--stock); }
+   So: a box with a hairline, on the page's own ground, sized by its contents.
+   What is drawn inside it is unchanged - same atlas, same renderer, same dots
+   the print head lays down - only laid down light-on-dark. The textarea sits
+   on top, invisible, so that the only rendering of anybody's words on this
+   page is still the printer's own. */
 
-.sheet-wrap::after {         /* the tear edge */
-  content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 8px;
-  background: var(--stock);
-  -webkit-mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 7px);
-  mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 7px);
+.field {
+  position: relative;
+  background: var(--field);
+  border: 1px solid var(--rule);
+  padding: 0.75rem;
 }
 
 #preview { display: block; width: 100%; height: auto; image-rendering: pixelated; }
 
 textarea#text {
+  /* Over the padding too, not only over the canvas: clicking anywhere in the
+     box should put the caret in it, the way any other field behaves. */
   position: absolute; inset: 0; width: 100%; height: 100%;
-  background: transparent; border: 0; padding: 0; margin: 0; resize: none;
+  background: transparent; border: 0; padding: 0.75rem; margin: 0; resize: none;
   color: transparent; caret-color: transparent;
   font: 16px/1 var(--body);   /* 16px: anything smaller zooms iOS on focus */
   outline: none;
 }
-.sheet-wrap:focus-within { box-shadow: 0 0 0 1px var(--ink); }
+.field:focus-within { border-color: var(--ink); }
 
 /* --- the measures ---------------------------------------------------------
-   Both are real: 30 columns is what the margin leaves of 384 dots, and 203 dpi
-   is eight dots to the millimetre. */
+   Both are real, and neither is written down anywhere: the column count is
+   what the margin leaves of 384 dots at whatever pitch your atlas has, and the
+   millimetres are that many dots at eight to the millimetre. Rebuild the font
+   and both numbers move on their own. */
 
 .gauge {
   display: flex; justify-content: space-between; gap: 1rem;

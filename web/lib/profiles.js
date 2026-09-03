@@ -14,7 +14,7 @@
 // The MXW01 work is the part of this project worth publishing: a protocol
 // reverse-engineered from captures, with three upstream implementations proved
 // wrong on four points (docs/09-protocol.md). It is paused, not deleted. Every
-// path it needs - the 384-wide canvas, the bare layout, firmware/ - still runs
+// path it needs - the 384-wide canvas, its own layout, firmware/ - still runs
 // and is still tested, so the day it is released it is released working.
 //
 // HOW A PROFILE IS CHOSEN
@@ -44,13 +44,34 @@ const MXW01 = {
   widthBytes: 48,
   dotsPerMm: 8,
   paperWidthMm: 58,
-  // The layout of 30 August: message and signature, nothing else. Kept exactly
-  // as it shipped. On a 48 mm printable width a title every three centimetres
-  // was 40% of the paper, which is what removed it - see render.js.
-  layout: "bare",
-  margin: 6,
-  topPad: 2,
-  bottomPad: 4,
+  // Framed since 3 September, and it was bare for a month before that.
+  //
+  // The bare layout was not a design decision, it was an arithmetic one: this
+  // deployment's queue passed a thousand messages and a four-metre roll turned
+  // out to hold 132 tickets, so 13 mm of furniture on a 30 mm ticket was 40%
+  // of the paper. That arithmetic belongs to a printer somebody points a
+  // public link at, not to the small printer as such - and the small printer
+  // is now the one the open-source edition documents, on somebody's desk,
+  // printing what their friends send them. A ticket on that desk with no rule
+  // above it and no rule below it does not read as a ticket; it reads as
+  // something that went wrong.
+  //
+  // `bare` has not been deleted, and docs/05-customising.md over there says
+  // when to go back to it: it is the right answer at volume, and this project
+  // has already been at volume once.
+  layout: "framed",
+  // 1.5 mm each side, up from 0.75. Rules make a margin visible: at 6 dots
+  // they ran within a hair of the paper edge and read as the renderer having
+  // run out of room, which is the sentence the TRP 100 III's own margin was
+  // raised over. Half of that printer's 2.8 mm, because 58 mm of paper cannot
+  // spend the same and every dot here is a character somebody wanted.
+  //
+  // Deliberately stopping at 12: at 13 dots the 28 px atlas loses a
+  // twenty-first column, and 20 columns is where ordinary words start being
+  // hyphenated by the wrap.
+  margin: 12,
+  topPad: 8,
+  bottomPad: 12,
   // A memory bound, not a style rule: the Pico buffers the whole bitmap in RAM
   // before it cuts WiFi. 1024 lines is 48 KB against 441 KB free.
   maxLines: 1024,

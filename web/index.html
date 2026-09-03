@@ -73,10 +73,11 @@
   </div>
 
   <form id="form" autocomplete="off">
-    <!-- The paper is the field. The textarea sits on top of the preview,
-         invisible, so that the only rendering of anybody's words on this page
-         is the printer's own. preview.js draws it; app.js does the rest. -->
-    <div class="sheet-wrap">
+    <!-- The textarea sits on top of the preview, invisible, so that the only
+         rendering of anybody's words on this page is the printer's own: what
+         you see in the box is the ticket, frame and reference included, at the
+         size it will come out. preview.js draws it; app.js does the rest. -->
+    <div class="field">
       <canvas id="preview" aria-hidden="true"></canvas>
       <label class="sr" for="text">Your message</label>
       <textarea id="text" name="text" maxlength="200" rows="4"
@@ -84,7 +85,9 @@
     </div>
 
     <p class="gauge">
-      <span id="gauge-cols">0 / 30 columns</span>
+      <!-- Both are replaced by preview.js from the atlas on the first draw;
+           what is written here is only what a reader sees for one frame. -->
+      <span id="gauge-cols">0 / 21 columns</span>
       <span id="gauge-mm">0.0 mm of paper</span>
     </p>
 

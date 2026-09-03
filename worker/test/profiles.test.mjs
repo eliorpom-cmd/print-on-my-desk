@@ -129,20 +129,46 @@ test("the framed ticket has the title and rules back", () => {
   assert.ok(solid.length >= 3, `expected 3 full-width rule rows, found ${solid.length}`);
 });
 
-test("the bare ticket has neither, exactly as it shipped", () => {
+// Both printers draw the framed ticket since 3 September. `bare` is no longer
+// anybody's default and is still supported, so it is tested the way somebody
+// would reach it: by setting `layout` on a profile.
+const BARE = { ...MXW01, layout: "bare" };
+
+test("the small printer has its rules too, since 3 September", () => {
   const canvas = composeTicket("Bonjour", { id: 7, createdAt: 0, profile: MXW01 });
   const rows = canvas.toAscii("#", ".").split("\n");
   const solid = rows.filter(
     (row) => row.slice(MXW01.margin, MXW01.widthPixels - MXW01.margin).indexOf(".") === -1
   );
-  assert.equal(solid.length, 0, "the small printer's ticket has no rules");
+  // Two rows under the title and one over the reference line, as on the wide
+  // printer. The bare month is over: a ticket on a desk with nothing at either
+  // end reads as a misprint rather than as a ticket.
+  assert.ok(solid.length >= 3, `expected 3 full-width rule rows, found ${solid.length}`);
 });
 
-test("the framed ticket carries the date, the bare one does not", () => {
-  const framed = composeTicket("x", { id: 7, createdAt: 0, profile: TRP100 }).height;
-  const bare = composeTicket("x", { id: 7, createdAt: 0, profile: MXW01 }).height;
-  // Title, two rules and a date line: about 13 mm of furniture.
+test("the bare layout still draws nothing but the message", () => {
+  // The escape hatch for volume. This deployment used it for a month, and the
+  // day a link travels further than expected it is the difference between a
+  // roll that holds 132 tickets and one that holds 200.
+  const canvas = composeTicket("Bonjour", { id: 7, createdAt: 0, profile: BARE });
+  const rows = canvas.toAscii("#", ".").split("\n");
+  const solid = rows.filter(
+    (row) => row.slice(BARE.margin, BARE.widthPixels - BARE.margin).indexOf(".") === -1
+  );
+  assert.equal(solid.length, 0, "the bare ticket has no rules");
+});
+
+test("the frame costs what it is documented to cost", () => {
+  const framed = composeTicket("x", { id: 7, createdAt: 0, profile: MXW01 }).height;
+  const bare = composeTicket("x", { id: 7, createdAt: 0, profile: BARE }).height;
+  // Title, two rules and a date line: about 13 mm of furniture, and the same
+  // dots on either printer. That number is the whole argument for keeping
+  // `bare`, so it is asserted rather than left in prose.
   assert.ok(framed > bare + 40, `framed ${framed}, bare ${bare}`);
+  assert.ok(
+    (framed - bare) / MXW01.dotsPerMm < 15,
+    `the furniture grew to ${((framed - bare) / MXW01.dotsPerMm).toFixed(1)} mm`
+  );
 });
 
 test("a handle gets its own line on the framed ticket", () => {
@@ -157,12 +183,12 @@ test("a handle gets its own line on the framed ticket", () => {
 });
 
 test("a handle costs no LINE on the bare ticket, only its descender", () => {
-  const without = composeTicket("x", { id: 1, createdAt: 0, profile: MXW01 }).height;
+  const without = composeTicket("x", { id: 1, createdAt: 0, profile: BARE }).height;
   const with_ = composeTicket("x", {
     id: 1,
     createdAt: 0,
     handle: "someone",
-    profile: MXW01,
+    profile: BARE,
   }).height;
   // Three rows, not a line: '#1  @someone' shares one line with '#1', and '@'
   // simply reaches lower than '#'. Measured at 58 and 61 on the code as it
@@ -399,20 +425,26 @@ test("the line ceiling is the host's, not a global one", () => {
  *
  * Where each row came from, because provenance is the whole value:
  *
- *   GoogleSansCode-Regular  Not this file's own output. Taken by checking out
- *                           worker/src/{bitmap,render,font,font-atlas}.js at
- *                           072c8fe - the last commit before the switch - and
- *                           rendering the same two tickets against it.
- *   JetBrainsMono-Regular   This file's own output, at the commit that added
- *                           the row, because this font had never shipped and
- *                           so there is no earlier state to appeal to. It
- *                           guards every refactor from that commit onward,
- *                           which is what a golden test does; it cannot also
- *                           guard the switch that introduced it.
+ *   GoogleSansCode-Regular  This file's own output at the commit that gave the
+ *                           MXW01 the framed layout, 3 September. The rows
+ *                           before it were the bare ticket - 58 lines, taken
+ *                           from 072c8fe rather than from this file - and they
+ *                           described a design that no longer exists. A golden
+ *                           test cannot guard a change to the thing it is
+ *                           golden about; what it guards is every refactor
+ *                           after it.
+ *   JetBrainsMono-Regular   The same, and the same date. Their edition rebuilt
+ *                           its atlas at 28 px in the same change, so both
+ *                           numbers moved for two reasons at once and neither
+ *                           row can appeal to an earlier state.
+ *
+ * WHAT IT STILL CATCHES, and it is most of what this table is for: a ticket
+ * that silently changes height or content when somebody edits the renderer,
+ * the font loader, or the bitmap packer for another reason.
  */
 const SHIPPED = {
-  "GoogleSansCode-Regular": [["Bonjour", 58, 0x74], ["Le petit chat", 58, 0x9c]],
-  "JetBrainsMono-Regular": [["Bonjour", 57, 0xcf], ["Le petit chat", 57, 0x43]],
+  "GoogleSansCode-Regular": [["Bonjour", 120, 0xde], ["Le petit chat", 120, 0x05]],
+  "JetBrainsMono-Regular": [["Bonjour", 143, 0x5c], ["Le petit chat", 143, 0x66]],
 };
 
 test("the small printer still renders exactly as it shipped", () => {

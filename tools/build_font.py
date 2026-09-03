@@ -72,7 +72,14 @@ PRESETS = {
     "terminal": {
         "file": "JetBrainsMono-Regular.ttf",
         "url": "https://github.com/JetBrains/JetBrainsMono/raw/master/fonts/ttf/JetBrainsMono-Regular.ttf",
-        "size": 22,
+        # 28 since 3 September, for the same reason the `code` note above
+        # exists: this is the size the open-source edition actually ships, so
+        # it has to be the size the documented command produces. At 22 its
+        # letters were 3.4 mm tall on the 58 mm printer, which is legible and
+        # reads as an afterthought - the first person to print with it said so.
+        # 28 is 4.4 mm and 21 characters a line, which is where the wrap stops
+        # cutting ordinary words.
+        "size": 28,
     },
     "typewriter": {
         "file": "CourierPrime-Regular.ttf",

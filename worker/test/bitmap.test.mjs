@@ -241,8 +241,24 @@ test("wrap drops trailing blank lines so they do not cost paper", () => {
 
 test("a 200-character ticket stays well inside the line budget", () => {
   const canvas = renderTicket("a".repeat(200), { id: 1, createdAt: 0 });
-  assert.ok(canvas.height < 400, `ticket is ${canvas.height} lines`);
-  assert.ok(charsPerLine() >= 26, `only ${charsPerLine()} characters per line`);
+  const { maxLines } = PROFILES.mxw01;
+
+  // Half the ceiling, not a round number. The ceiling is the Pico's RAM and a
+  // strip carries several tickets, so "two of the longest message anybody can
+  // send still share one print" is the property worth holding. It was `< 400`,
+  // which held the same idea against the atlas of the day and failed the
+  // moment a bigger one was built for the same paper - a bound that has to be
+  // re-tuned by whoever trips it is a bound nobody trusts.
+  assert.ok(
+    canvas.height < maxLines / 2,
+    `ticket is ${canvas.height} lines of a ${maxLines} budget`
+  );
+
+  // 20 is where the wrap starts hyphenating ordinary words: "anniversaire" is
+  // twelve characters and shares its line with nothing at 19. Their edition
+  // sits at 21 by choice, having gone to a 28 px atlas on 3 September; this
+  // one is at 30. Below 20 the ticket stops reading as prose.
+  assert.ok(charsPerLine() >= 20, `only ${charsPerLine()} characters per line`);
 });
 
 test("a ticket of accented text is no taller than the same text plain", () => {

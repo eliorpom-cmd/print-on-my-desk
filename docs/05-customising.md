@@ -28,11 +28,17 @@ never contradict the actual setting.
 site. The site is dark, and there is no light-mode block to keep in step: one
 palette, one place.
 
-Two of those tokens are not interchangeable, and the comment in the file says
+Three of those tokens are not interchangeable, and the comment in the file says
 so. `--paper` and `--ink` are the **page's** background and text — `/admin`
 borrows this stylesheet and paints itself with them, so swapping their meaning
-makes the desk unreadable. The physical roll is `--stock`, and it stays light
-in every theme, because paper does.
+makes the desk unreadable. `--field` is the box the message is typed into.
+`--stock` is the physical roll, and it stays light in every theme because paper
+does: it is used where there is actually paper — the social card, and the
+ticket that comes out of the slot when something is really printed.
+
+If you change `--field`, change `FIELD` in `web/ticket.js` to match. The dots
+in the box are painted onto a canvas rather than styled by CSS, so that one
+colour is written in two places on purpose, and each says so.
 
 **There are no web fonts to change**, and that is the one deliberate part of
 the design. The page has no typeface of its own for a message: what somebody
@@ -48,10 +54,24 @@ The printer draws from a bitmap atlas, built offline from a real font. Three
 are set up for you:
 
 ```sh
-python3 tools/build_font.py --preset terminal    # taller, denser — WHAT SHIPS
-python3 tools/build_font.py --preset code        # even, modern, one column wider
-python3 tools/build_font.py --preset typewriter  # looks like a receipt, two narrower
+python3 tools/build_font.py --preset terminal    # JetBrains Mono, 28 px — WHAT SHIPS
+python3 tools/build_font.py --preset code        # Google Sans Code, even and modern
+python3 tools/build_font.py --preset typewriter  # Courier Prime, looks like a receipt
 ```
+
+Each preset carries a face **and the size it was tuned at**, and those sizes
+are not the same: the one that ships is 28 px, which is 4.4 mm tall on a 58 mm
+printer and fits 21 characters on a line. The other two were tuned smaller, for
+a wider printer. Try one with `--preview` before you keep it, and if it comes
+out smaller than you wanted, say so:
+
+```sh
+python3 tools/build_font.py --preset typewriter --size 28 --preview
+```
+
+One number to read carefully: the script reports characters per line across the
+**whole** 384 dots, and your ticket has a margin, so the page's gauge shows one
+fewer. The gauge is the one that counts.
 
 **This changes the site, not just the paper.** The headline stays as it is, but
 the preview on the front page, the ticket, and the social card all follow,
@@ -91,14 +111,37 @@ decides how many characters fit on a line: the presets are tuned, but your own
 font will not be.
 
 It must be **monospaced**. The atlas gives every glyph the same advance, and a
-proportional font forced through it comes out looking like a ransom note. The
-script tells you the resulting characters per line — under 30 starts to feel
-cramped on a 58 mm roll.
+proportional font forced through it comes out looking like a ransom note.
+
+The useful range on a 58 mm roll is narrower than it looks. Under **20**
+characters a line, ordinary words start being cut in half by the wrap —
+"anniversaire" is twelve letters and shares its line with nothing. Much above
+**24** and the letters are back to the 3 mm that reads as a receipt from a
+supermarket rather than as something somebody sent you. 21 is what ships.
 
 ## The ticket layout — an hour
 
 `worker/src/render.js`. Margins, the rule above the id, where the date sits,
 the separator between tickets in a batch.
+
+**There are two layouts, and one line chooses.** `layout` in
+`worker/src/profiles.js`:
+
+| | What it draws | What it costs |
+| :-- | :-- | :-- |
+| `framed` | title, rules, `#12 03/09 14:22`, signature | about 13 mm a ticket |
+| `bare` | the message and the signature, nothing else | nothing |
+
+`framed` is what both printers draw, and it is what makes a ticket on the floor
+findable again — the number on it is the one `/admin` searches by.
+
+`bare` is the answer at volume, and it is here because this project needed it
+once: a link travelled further than expected, the queue passed a thousand
+messages, and a four-metre roll turned out to hold 132 tickets. At that point
+13 mm of furniture on a 30 mm ticket is 40% of your paper, and a title every
+three centimetres of a continuous strip is repetition rather than identity.
+
+If you are printing a handful of messages a day, leave it framed.
 
 It draws into a 1-bit canvas (`bitmap.js`) at the printer's exact width, and
 that is what makes previewing honest: the browser draws the same bitmap the

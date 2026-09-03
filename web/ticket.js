@@ -43,6 +43,27 @@ export const INK = [20, 20, 15];        // --stock-ink
 export const FAINT = [201, 199, 190];
 
 /**
+ * The same three, for a ticket drawn INSIDE THE FORM rather than on paper.
+ *
+ * The form used to be a sheet of paper: a cream block with a torn edge, the
+ * only light object on a dark page. It read as decoration around the thing you
+ * were typing rather than as somewhere to type, so since 3 September the field
+ * is a field - a hairline box on the page's own ground - and the paper appears
+ * when a ticket is actually printed, which is the moment it means something.
+ *
+ * The dots are unchanged. Same atlas, same renderer, same geometry; they are
+ * simply laid down light-on-dark, because that is what the page is.
+ *
+ * These mirror --field, --ink and --off in style.css. Two copies of a colour
+ * is one too many, and reading them back out of the stylesheet at run time
+ * would mean parsing whatever notation somebody wrote them in - so they are
+ * repeated here, named after the tokens they follow, rather than guessed at.
+ */
+export const FIELD = [20, 21, 24];        // --field
+export const FIELD_INK = [233, 233, 230]; // --ink
+export const FIELD_FAINT = [85, 88, 92];  // --off
+
+/**
  * Renders a ticket the right way up.
  *
  * Same renderer, same atlas, same geometry as the paper - and then turned back

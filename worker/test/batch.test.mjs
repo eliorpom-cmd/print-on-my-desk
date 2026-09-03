@@ -12,6 +12,8 @@ import assert from "node:assert/strict";
 
 import { renderTicket, renderBatch, composeTicket, LAYOUT } from "../src/render.js";
 import { buildBatchPayload, MAX_LINES } from "../src/jobs.js";
+import { PROFILES, DEFAULT_PROFILE } from "../src/profiles.js";
+import { Canvas } from "../src/bitmap.js";
 
 const SETTINGS = { intensity: 93, feed_lines: 12 };
 
@@ -88,21 +90,36 @@ test("a batch saves an eject margin per ticket", () => {
 });
 
 test("tickets stay separated by a dashed tear line", () => {
-  // Since the titles and reference lines went, this is the only thing marking
-  // where one message ends and the next begins.
+  // Where one message ends and the next begins, on a strip that comes out in
+  // one piece and gets torn by hand.
   const one = renderBatch([job(1, "Alpha")]);
   const two = renderBatch([job(1, "Alpha"), job(2, "Beta")]);
 
+  // Matched by its PATTERN, not by how much ink it has.
+  //
+  // This counted rows inking between 120 and 260 dots, on the reasoning that a
+  // dashed rule inks about half the width while text inks far less. That held
+  // until the atlas grew: a bold title at 28 px inks about a third of the row
+  // and walked straight into the range, so a strip carrying one ticket
+  // reported one separator and the test failed with nothing wrong.
+  //
+  // So the needle is drawn with the same primitive the strip draws it with,
+  // and then rotated the way the strip is rotated - a batch for this printer
+  // is flipped once at the end, which mirrors every row left to right. A
+  // hand-written pattern matched the unrotated rule and nothing on the strip.
+  //
+  // Drawing the needle with dashedRule does not make this a test of
+  // dashedRule: bitmap.test.mjs owns that. What is asserted here is renderBatch
+  // putting exactly one of them between two tickets and none around one.
+  const profile = PROFILES[DEFAULT_PROFILE];
+  const separator = (() => {
+    const row = new Canvas(profile.widthPixels);
+    row.dashedRule(0, 6, 5, profile.margin);
+    if (profile.flip180) row.rotate180();
+    return row.toAscii("#", ".").split("\n")[0];
+  })();
   const dashed = (canvas) =>
-    canvas.rows.filter((row) => {
-      const ink = row.reduce(
-        (n, byte) => n + byte.toString(2).split("1").length - 1,
-        0
-      );
-      // A dashed rule inks roughly half the width; a line of text far less,
-      // and a solid rule far more.
-      return ink > 120 && ink < 260;
-    }).length;
+    canvas.toAscii("#", ".").split("\n").filter((row) => row === separator).length;
 
   assert.equal(dashed(one), 0, "a lone ticket needs no separator");
   assert.equal(dashed(two), 1, "two tickets are parted by exactly one");

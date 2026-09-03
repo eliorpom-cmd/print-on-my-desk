@@ -23,7 +23,7 @@
 // animation; this file only draws, and the two never touch the same element.
 
 import { charsPerLine } from "./lib/render.js";
-import { PROFILE, renderForScreen, paint, INK, FAINT } from "./ticket.js";
+import { PROFILE, renderForScreen, paint, FIELD, FIELD_INK, FIELD_FAINT } from "./ticket.js";
 
 const canvas = document.getElementById("preview");
 const input = document.getElementById("text");
@@ -32,9 +32,9 @@ const mm = document.getElementById("gauge-mm");
 if (canvas && input) {
   const COLUMNS = charsPerLine(PROFILE);
 
-  // Shown on an empty sheet. Not a label sitting over the paper in some other
-  // font - it is drawn in the dots too, faintly, so that the first thing
-  // anybody sees is already the truth about what this machine does.
+  // Shown on an empty field. Not a placeholder in some other font - it is
+  // drawn in the dots too, faintly, so that the first thing anybody sees is
+  // already the truth about what this machine does.
   const EMPTY = "Type here. These are the printer's own dots, not a font that looks like them.";
 
   function draw() {
@@ -44,7 +44,12 @@ if (canvas && input) {
     // header, the rule and the spacing the real ticket has. A preview of only
     // the body would be a preview of something nobody receives.
     const rendered = renderForScreen(empty ? EMPTY : text);
-    paint(canvas, rendered, { ink: empty ? FAINT : INK });
+    // Light on dark, because this is a form control on a dark page rather than
+    // a sheet of paper. The paper is what the printing animation shows.
+    paint(canvas, rendered, {
+      ink: empty ? FIELD_FAINT : FIELD_INK,
+      stock: FIELD,
+    });
 
     if (cols) {
       const longest = empty ? 0 : Math.max(...text.split("\n").map((l) => l.length));

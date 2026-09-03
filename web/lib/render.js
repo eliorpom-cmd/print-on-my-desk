@@ -9,19 +9,23 @@
 // text perfectly well, and letting it would put the look of the ticket on a
 // box in the flat instead of in this file.
 //
-// TWO PRINTERS, TWO LAYOUTS
+// TWO LAYOUTS, AND WHY BOTH SURVIVE
 //
 // The geometry comes from profiles.js, and so does the choice of layout:
 //
-//   bare    the MXW01 ticket as it shipped on 30 August - message, signature,
-//           nothing else. 384 dots across, 48 mm of paper.
-//   framed  the ticket brought back on 31 August for the TRP 100 III - title,
-//           rules, reference and date, with margins that read as margins.
-//           512 dots across, 72 mm of paper.
+//   framed  title, rules, reference and date, with margins that read as
+//           margins. What both printers draw since 3 September.
+//   bare    message and signature, nothing else. What the MXW01 drew from 30
+//           August to 3 September, and still the right answer at volume.
 //
-// The two are not a preference. On 48 mm the furniture was 13 mm of a 30 mm
-// ticket, which is why it went; on 72 mm the same dots are a header on a
-// ticket with room for one.
+// The choice is arithmetic, not taste. The furniture costs about 13 mm a
+// ticket whatever the paper: on a 72 mm strip that is a header, and on a 30 mm
+// one it is 40% of the ticket. THAT is what removed it here for a month - this
+// deployment's queue passed a thousand messages and a four-metre roll holds
+// 132 tickets - and it is why `bare` is still here rather than deleted. A
+// printer somebody points a public link at wants it; a printer on a desk
+// printing what friends send does not, and comes out looking like a mistake
+// without a rule at each end.
 
 import { Canvas } from "./bitmap.js";
 import { PROFILES, DEFAULT_PROFILE, profileFor } from "./profiles.js";
@@ -136,18 +140,21 @@ function drawBody(canvas, text, profile, y) {
 }
 
 /**
- * The MXW01 ticket: the message, and whoever signed it.
+ * The frugal ticket: the message, and whoever signed it.
  *
- * Stripped to this on 30 August, when the queue passed a thousand and a
- * four-metre roll turned out to hold 132 tickets. What went: the PRINT ON MY DESK
- * title and rule at the top, and the "#id date" line and rule at the bottom.
- * Together they were 13 mm of every ticket - 40% of the paper, against 32% for
- * what people actually wrote - and on a continuous strip nobody tears apart, a
+ * Written on 30 August, when the queue passed a thousand and a four-metre roll
+ * turned out to hold 132 tickets. What it drops: the PRINT ON MY DESK title and
+ * rule at the top, and the "#id date" line and rule at the bottom. Together
+ * they are 13 mm of every ticket - 40% of the paper, against 32% for what
+ * people actually wrote - and on a continuous strip nobody tears apart, a
  * title every three centimetres is repetition rather than identity.
  *
- * The cost is real and worth naming: a ticket on the floor no longer says
- * which message it is. Looking one up means searching its text in /admin.
- * That cost is exactly what the framed layout below stopped paying.
+ * NO PROFILE SELECTS IT TODAY, and it is not dead code. It is what to set
+ * `layout` to when a link goes further than expected and the paper starts to
+ * cost real money - which has happened here once, and is the reason this
+ * function exists at all. The cost of choosing it is worth naming: a ticket on
+ * the floor no longer says which message it is, and looking one up means
+ * searching its text in /admin.
  */
 function composeBare(canvas, text, profile, { id, handle }) {
   let y = drawBody(canvas, text, profile, profile.topPad);

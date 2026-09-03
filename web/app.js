@@ -289,7 +289,27 @@ printClose.addEventListener("click", closePrint);
 
 /* --- the invitation --- */
 
+/**
+ * Is there anywhere to invite anybody TO?
+ *
+ * The invitation is optional and most copies of this page will never fill it
+ * in - so the page itself is the configuration, and the destination is the
+ * thing that decides. An `href` of "#" is what the unconfigured page ships
+ * with, and it is not a place.
+ *
+ * Without this check a fresh install thanks somebody for their message and
+ * then, nine hundred milliseconds later, slides up a dialog titled "One more
+ * thing" with an empty paragraph and a button that goes nowhere. That happened
+ * to the first person who followed the quick start on a machine that was not
+ * this one, which is how it was found.
+ */
+function inviteConfigured() {
+  const to = sheetCta?.getAttribute("href") ?? "";
+  return to !== "" && !to.startsWith("#");
+}
+
 function invitePending() {
+  if (!inviteConfigured()) return false;
   try {
     const seen = Number(localStorage.getItem(SHEET_KEY));
     return !seen || Date.now() - seen > SHEET_EVERY_MS;
