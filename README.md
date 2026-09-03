@@ -1,17 +1,36 @@
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.svg">
+  <img src="docs/images/logo-light.svg" alt="" width="132">
+</picture>
+
 # Print on my desk
 
-A thermal printer on your desk, with a web page in front of it. Somebody opens
-the link, writes a message, and it comes out on paper, in your room, a few
-seconds later.
+**A thermal printer on your desk, with a web page in front of it.**<br>
+Somebody opens the link, writes a message, and it comes out on paper, in your
+room, a few seconds later.
+
+[![tests](https://github.com/eliorpom-cmd/print-on-my-desk/actions/workflows/test.yml/badge.svg)](https://github.com/eliorpom-cmd/print-on-my-desk/actions/workflows/test.yml)
+[![licence: AGPL-3.0](https://img.shields.io/badge/licence-AGPL--3.0-6b7280)](LICENSE)
+[![runs on: Cloudflare free plan](https://img.shields.io/badge/runs%20on-Cloudflare%20free%20plan-6b7280)](docs/07-operating.md)
+[![no build step](https://img.shields.io/badge/build%20step-none-6b7280)](#what-you-are-building)
+[![set-up: 30 minutes](https://img.shields.io/badge/set--up-30%20minutes-6b7280)](docs/01-quick-start.md)
+
+</div>
 
 It is not a product and it is not meant to scale. It is meant to be **yours**:
 one printer, one link, and the people you send that link to.
 
-<!-- A picture goes here, and it is the most useful thing this file could gain.
-     See docs/images/README.md for what to take. Uncomment when you have one:
+<div align="center">
 
-![A ticket, printed](docs/images/ticket.jpg)
--->
+<img src="docs/images/ticket.jpg" alt="A message printing on a 58 mm thermal printer" width="420">
+<img src="docs/images/printer.jpg" alt="A printer surrounded by the tickets it has printed" width="420">
+
+<sub>Two photographs of the machine this documents. The third one that would
+help is a screenshot of the page on a phone — see docs/images/README.md.</sub>
+
+</div>
 
 ---
 

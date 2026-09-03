@@ -1,0 +1,95 @@
+<!-- The mark, drawn on the same grid the printer draws on: one circle per
+     dot, 24 across by 20 down, an envelope going into a slot.
+
+     TWO FILES AND NO <style> BLOCK, on purpose. GitHub strips <style> out of
+     any SVG it renders in a README, so a single file that switched colour with
+     prefers-color-scheme would come out invisible on one of the two themes -
+     which is exactly what it did. The README picks between these with
+     <picture> instead, which GitHub does honour.
+
+     Generated from the same drawing as the site icon. Edit both or neither. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="20" viewBox="0 0 24 20" fill="#e9e9e6" role="img">
+  <title>Print on my desk</title>
+  <circle cx="9" cy="1" r=".82"/>
+  <circle cx="11" cy="1" r=".82"/>
+  <circle cx="13" cy="1" r=".82"/>
+  <circle cx="15" cy="1" r=".82"/>
+  <circle cx="9" cy="3" r=".82"/>
+  <circle cx="11" cy="3" r=".82"/>
+  <circle cx="13" cy="3" r=".82"/>
+  <circle cx="15" cy="3" r=".82"/>
+  <circle cx="1" cy="5" r=".82"/>
+  <circle cx="3" cy="5" r=".82"/>
+  <circle cx="5" cy="5" r=".82"/>
+  <circle cx="7" cy="5" r=".82"/>
+  <circle cx="9" cy="5" r=".82"/>
+  <circle cx="11" cy="5" r=".82"/>
+  <circle cx="13" cy="5" r=".82"/>
+  <circle cx="15" cy="5" r=".82"/>
+  <circle cx="17" cy="5" r=".82"/>
+  <circle cx="19" cy="5" r=".82"/>
+  <circle cx="21" cy="5" r=".82"/>
+  <circle cx="23" cy="5" r=".82"/>
+  <circle cx="1" cy="7" r=".82"/>
+  <circle cx="3" cy="7" r=".82"/>
+  <circle cx="5" cy="7" r=".82"/>
+  <circle cx="7" cy="7" r=".82"/>
+  <circle cx="9" cy="7" r=".82"/>
+  <circle cx="11" cy="7" r=".82"/>
+  <circle cx="13" cy="7" r=".82"/>
+  <circle cx="15" cy="7" r=".82"/>
+  <circle cx="17" cy="7" r=".82"/>
+  <circle cx="19" cy="7" r=".82"/>
+  <circle cx="21" cy="7" r=".82"/>
+  <circle cx="23" cy="7" r=".82"/>
+  <circle cx="1" cy="9" r=".82"/>
+  <circle cx="3" cy="9" r=".82"/>
+  <circle cx="5" cy="9" r=".82"/>
+  <circle cx="7" cy="9" r=".82"/>
+  <circle cx="9" cy="9" r=".82"/>
+  <circle cx="11" cy="9" r=".82"/>
+  <circle cx="13" cy="9" r=".82"/>
+  <circle cx="15" cy="9" r=".82"/>
+  <circle cx="17" cy="9" r=".82"/>
+  <circle cx="19" cy="9" r=".82"/>
+  <circle cx="21" cy="9" r=".82"/>
+  <circle cx="23" cy="9" r=".82"/>
+  <circle cx="1" cy="11" r=".82"/>
+  <circle cx="3" cy="11" r=".82"/>
+  <circle cx="5" cy="11" r=".82"/>
+  <circle cx="7" cy="11" r=".82"/>
+  <circle cx="9" cy="11" r=".82"/>
+  <circle cx="11" cy="11" r=".82"/>
+  <circle cx="13" cy="11" r=".82"/>
+  <circle cx="15" cy="11" r=".82"/>
+  <circle cx="17" cy="11" r=".82"/>
+  <circle cx="19" cy="11" r=".82"/>
+  <circle cx="21" cy="11" r=".82"/>
+  <circle cx="23" cy="11" r=".82"/>
+  <circle cx="1" cy="13" r=".82"/>
+  <circle cx="3" cy="13" r=".82"/>
+  <circle cx="5" cy="13" r=".82"/>
+  <circle cx="7" cy="13" r=".82"/>
+  <circle cx="17" cy="13" r=".82"/>
+  <circle cx="19" cy="13" r=".82"/>
+  <circle cx="21" cy="13" r=".82"/>
+  <circle cx="23" cy="13" r=".82"/>
+  <circle cx="7" cy="15" r=".82"/>
+  <circle cx="9" cy="15" r=".82"/>
+  <circle cx="11" cy="15" r=".82"/>
+  <circle cx="13" cy="15" r=".82"/>
+  <circle cx="15" cy="15" r=".82"/>
+  <circle cx="17" cy="15" r=".82"/>
+  <circle cx="7" cy="17" r=".82"/>
+  <circle cx="9" cy="17" r=".82"/>
+  <circle cx="11" cy="17" r=".82"/>
+  <circle cx="13" cy="17" r=".82"/>
+  <circle cx="15" cy="17" r=".82"/>
+  <circle cx="17" cy="17" r=".82"/>
+  <circle cx="7" cy="19" r=".82"/>
+  <circle cx="9" cy="19" r=".82"/>
+  <circle cx="11" cy="19" r=".82"/>
+  <circle cx="13" cy="19" r=".82"/>
+  <circle cx="15" cy="19" r=".82"/>
+  <circle cx="17" cy="19" r=".82"/>
+</svg>
