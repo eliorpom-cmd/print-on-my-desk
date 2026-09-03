@@ -330,10 +330,14 @@ export function screen(text) {
  * needed: "retard" is a slur on its own and an everyday word for lateness, so
  * the term carries the words that make it innocent next to it.
  *
- * The exemption is per occurrence, not per message. In "j'ai du retard, espece
- * de retard" - "I am running late, you retard" - the first is excused by the
- * word before it and the second still trips. One innocent use in a sentence
- * does not buy a licence for the rest of it.
+ * The exemption is per occurrence, not per message.
+ *
+ * #public-allow-french the example IS the subject: this function exists
+ * because one language's slur is another's ordinary word, so the pair that
+ * shows it has to be in the language it happens in, and it is glossed.
+ * In "j'ai du retard, espece de retard" - "I am running late, you retard" -
+ * the first is excused by the word before it and the second still trips. One
+ * innocent use in a sentence does not buy a licence for the rest of it.
  */
 function exempted(term, tokens, index) {
   const before = tokens[index - 1];

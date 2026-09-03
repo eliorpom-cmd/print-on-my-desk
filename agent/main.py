@@ -391,7 +391,7 @@ class Agent:
         if not self.can_print:
             # Deliberately does not ask for work. Claiming a job the machine
             # cannot print burns it for a reason its author had nothing to do
-            # with - the lesson of ETAT 2.9, and it survives the change of
+            # with, and it survives the change of
             # printer unchanged.
             log("waiting", state=self.printer_state, error=self.last_error)
             return PRINTER_RETRY_S

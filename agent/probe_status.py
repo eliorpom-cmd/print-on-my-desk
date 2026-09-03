@@ -15,7 +15,7 @@
 # byte it guesses about is the one that decides whether an empty roll is
 # noticed. The MXW01's version of that mistake cost real messages: it accepted
 # a whole ticket with no paper, echoed the correct checksum, and marked the job
-# printed with nothing on the floor (ETAT 2.11bis).
+# printed with nothing on the floor.
 #
 # So: run this, put the printer through the four states, and write down what
 # comes back. docs/10-escpos.md has the table waiting for the numbers.

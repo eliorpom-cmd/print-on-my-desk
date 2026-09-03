@@ -8,8 +8,8 @@
 #
 # probe_status.py answers one question - what do the status bytes mean - and it
 # answered it badly the first time, because it asked each query once and a
-# single reading cannot tell a slow answer from a missing one. That is the
-# lesson ETAT 2.12 already paid for on the other printer, in capitals:
+# single reading cannot tell a slow answer from a missing one. That lesson
+# was already paid for on the other printer, in capitals:
 # MEASURE THE VARIANCE FIRST, NOT LAST. A single observation derailed that
 # investigation twice.
 #
@@ -68,7 +68,7 @@ def usb_identity(printer):
     title("A. What the USB bus says about the machine")
     device = printer.device
     if device is None:
-        print("  pas de device")
+        print("  no device")
         return
 
     def text(index):
@@ -93,7 +93,7 @@ def usb_identity(printer):
     for configuration in device:
         for interface in configuration:
             print(
-                "  interface %d : classe %d, sous-classe %d, protocole %d"
+                "  interface %d: class %d, subclass %d, protocol %d"
                 % (
                     interface.bInterfaceNumber,
                     interface.bInterfaceClass,
@@ -106,7 +106,7 @@ def usb_identity(printer):
                     "IN " if endpoint.bEndpointAddress & 0x80 else "OUT"
                 )
                 print(
-                    "      endpoint 0x%02X  %s  paquet max %d octets"
+                    "      endpoint 0x%02X  %s  max packet %d bytes"
                     % (endpoint.bEndpointAddress, direction, endpoint.wMaxPacketSize)
                 )
     print()
@@ -152,10 +152,10 @@ def query_stability(printer, rounds=15):
             )
         )
         if missing:
-            print("             %d sans reponse" % missing)
+            print("             %d with no answer" % missing)
             stable = False
         if errors:
-            print("             %d erreurs" % errors)
+            print("             %d errors" % errors)
             stable = False
         if len(distinct) > 1:
             print("             WARNING: the value changes from round to round")
@@ -198,19 +198,19 @@ def first_answer_latency(printer, rounds=4):
         try:
             printer.open()
         except ep.PrinterError as err:
-            print("  tour %d : impossible de rouvrir - %s" % (i + 1, err))
+            print("  round %d: could not reopen - %s" % (i + 1, err))
             continue
         opened = time.monotonic()
         answer = printer._dle_eot(1)
         done = time.monotonic()
         delays.append(done - opened)
         print(
-            "  tour %d : ouverture %.0f ms, premiere reponse %.0f ms, valeur %s"
+            "  round %d: open %.0f ms, first answer %.0f ms, value %s"
             % (
                 i + 1,
                 (opened - started) * 1000,
                 (done - opened) * 1000,
-                "0x%02X" % answer if answer is not None else "AUCUNE",
+                "0x%02X" % answer if answer is not None else "NONE",
             )
         )
         time.sleep(0.3)
@@ -222,9 +222,9 @@ def first_answer_latency(printer, rounds=4):
             % (max(delays) * 1000, 1500)
         )
         if max(delays) > 1.0:
-            print("  ATTENTION: proche de la limite. Il faudra l'augmenter.")
+            print("  WARNING: close to the limit. It will have to be raised.")
         else:
-            print("  Marge confortable.")
+            print("  Comfortable margin.")
     return delays
 
 
@@ -254,14 +254,14 @@ def recovery(printer, timeout_s=90):
             state = printer.status()
             took = time.monotonic() - started
             print("\n  CAME BACK on its own after %.1f s." % took)
-            print("  etat : %r" % state)
+            print("  state: %r" % state)
             print()
             print("  So changing a roll needs nothing special: the agent finds it")
             print("  again by itself. It checks every %d s." % 30)
             return took
         except ep.PrinterError:
             time.sleep(1.0)
-    print("\n  PAS REVENUE en %d s." % timeout_s)
+    print("\n  DID NOT COME BACK within %d s." % timeout_s)
     print("  The printer will have to be power-cycled after every roll, and")
     print("  that belongs in the documentation rather than in a busy evening.")
     return None

@@ -284,7 +284,7 @@ test("dates are rendered in Paris time, not the Worker's", () => {
 // --- base64 ----------------------------------------------------------------
 
 test("base64 round-trips a full ticket", () => {
-  const canvas = renderTicket("Le vent se leve", { id: 12, createdAt: 0 });
+  const canvas = renderTicket("The wind is picking up", { id: 12, createdAt: 0 });
   const bytes = canvas.toBytes();
   const decoded = Buffer.from(toBase64(bytes), "base64");
   assert.equal(decoded.length, bytes.length);

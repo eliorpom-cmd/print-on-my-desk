@@ -486,16 +486,16 @@ asyncio.run(run_for(service, 4))
 check("no breach of constraint 6", radio.violations, [])
 check("the WiFi is off at the end", radio.wifi, False)
 check("the BLE is off at the end", radio.ble, False)
-check_true("des heartbeats ont ete envoyes", len(api.heartbeats) >= 3)
+check_true("heartbeats were sent", len(api.heartbeats) >= 3)
 gaps = [b - a for a, b in zip(radio.contacts, radio.contacts[1:])]
-check_true("des contacts BLE reguliers", len(radio.contacts) >= 4)
+check_true("the BLE contacts are regular", len(radio.contacts) >= 4)
 # Asserted against the INTENDED interval, not against the printer's sleep
 # threshold. The first version of this test allowed anything under 9 minutes,
 # which let a real bug through: the loop was stretching the interval to 8.4
 # minutes and the printer fell asleep anyway. A test that only catches a
 # violation of the outer limit cannot catch the drift towards it.
 check(
-    "les contacts BLE tiennent l'intervalle voulu",
+    "the BLE contacts hold the interval they were given",
     max(gaps) <= main.KEEPALIVE_DUE_MS + 60000 if gaps else True,
     True,
 )
@@ -531,9 +531,9 @@ asyncio.run(run_for(service, 3))
 check("no breach of constraint 6", radio.violations, [])
 check("the ticket was printed", len(printer.prints), 1)
 check("the right number of lines", printer.prints[0]["lines"], 32)
-check("l'avance papier a ete demandee", printer.feeds, [80])
-check("le job a ete confirme", [d["id"] for d in api.done_calls], [101])
-check("confirme comme reussi", api.done_calls[0]["ok"], True)
+check("the paper feed was asked for", printer.feeds, [80])
+check("the job was reported done", [d["id"] for d in api.done_calls], [101])
+check("reported as a success", api.done_calls[0]["ok"], True)
 check("the CRC is reported back to the Worker", api.done_calls[0]["crc"], job["crc"])
 
 print("\nTwo jobs in a row: one single strip")
@@ -549,7 +549,7 @@ check("both travelled on the same strip", api.batches, [[1, 2]])
 check("the strip carries the lines of both", printer.prints[0]["lines"], 64)
 check("one confirmation round trip", len(api.done_calls), 1)
 check("both are confirmed", api.done_calls[0]["ids"], [1, 2])
-check("confirme comme reussi", api.done_calls[0]["ok"], True)
+check("reported as a success", api.done_calls[0]["ok"], True)
 check("no breach of constraint 6", radio.violations, [])
 
 print("\nA failed batch: every ticket on the strip fails together")
@@ -576,7 +576,7 @@ printer.temperature = 44
 printer.cools = True
 service = main.Service()
 asyncio.run(run_for(service, 3))
-check("l'etat passe en refroidissement", service.printer_state, "cooling")
+check("the state moves to cooling", service.printer_state, "cooling")
 check_true("one attempt, not three", len(api.done_calls) == 1)
 check_true("and it asks to be replayed", api.done_calls[0]["retry"] is True)
 check_true("nothing was printed", len(printer.prints) == 0)
@@ -592,7 +592,7 @@ printer.temperature = 44
 printer.cools = True
 service = main.Service()
 asyncio.run(run_for(service, 16))
-check("l'etat est revenu a awake", service.printer_state, "awake")
+check("the state is back to awake", service.printer_state, "awake")
 check_true("and the ticket came out in the end", len(printer.prints) >= 1)
 
 print("\nA strip refused before its first byte is replayed")
@@ -602,7 +602,7 @@ print("\nA strip refused before its first byte is replayed")
 # five good messages on 30 August because the head had reached 40 C.
 for failure, label in (
     (FakeTooHot, "trop chaude"),
-    (FakeNoPaper, "sans papier"),
+    (FakeNoPaper, "no paper"),
     (FakeAsleep, "endormie"),
 ):
     setup = lambda f=failure: setattr(printer, "fail_print_with", f)
@@ -749,7 +749,7 @@ try:
 except _Reset:
     pass
 fake_net.wifi_up = original_wifi_up
-check_true("la carte a redemarre", len(RESETS) >= 1)
+check_true("the board restarted", len(RESETS) >= 1)
 
 print()
 if FAILURES:
@@ -770,7 +770,7 @@ service = main.Service()
 asyncio.run(run_for(service, 3))
 check("the Worker's ceiling is adopted", service.head_max_c, 41)
 check("and so is the resume threshold", service.cool_to_c, 37)
-check_true("et le ticket sort a 40 C", len(printer.prints) >= 1)
+check_true("and the ticket comes out at 40 C", len(printer.prints) >= 1)
 
 print("\nAn absurd setting cannot cook the head")
 reset_world()

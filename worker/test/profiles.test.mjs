@@ -370,7 +370,7 @@ test("one printer's tear-off feed is never applied to the other", () => {
 });
 
 test("feed_lines is never zero, whatever the settings row says", () => {
-  // A ticket still under the print head cannot be torn off (ETAT 2.10). A
+  // A ticket still under the print head cannot be torn off. A
   // hand-edited settings row must not be able to produce one.
   for (const bad of ["0", "-5", "nonsense", ""]) {
     const settings = { ...SETTINGS, [feedLinesKey(TRP100)]: bad };

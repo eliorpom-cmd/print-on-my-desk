@@ -157,7 +157,7 @@ export const MAX_PRINT_ATTEMPTS = 3;
  *
  * So the key carries the profile, the old flat `feed_lines` row is ignored,
  * and an unset key means "whatever the profile says". Never zero: a ticket
- * still under the head is a ticket nobody can tear off (ETAT 2.10).
+ * still under the head is a ticket nobody can tear off.
  */
 export function feedLinesKey(profile) {
   return `feed_lines_${profile.id}`;

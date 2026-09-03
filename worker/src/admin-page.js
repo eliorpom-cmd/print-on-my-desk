@@ -381,7 +381,7 @@ export const ADMIN_PAGE = String.raw`<!doctype html>
   // Ids ticked right now. Survives a refresh of the list: the desk reloads
   // every few seconds, and losing a selection halfway through reading a
   // hundred and fifty messages would be maddening.
-  // Where "very short" stops. Three words catches hello / merci beaucoup / trop
+  // Where "very short" stops. Three words catches hello / thanks a lot / so
   // cool without touching anything that says something.
   var SHORT_WORDS = 3;
 

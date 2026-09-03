@@ -29,7 +29,7 @@
 #
 # WHAT WAS LOST IN THE MOVE, AND IT IS WORTH NAMING
 #
-# The MXW01 echoed back a CRC8 of the image buffer it had received (ETAT 2.1),
+# The MXW01 echoed back a CRC8 of the image buffer it had received,
 # which made a print provable end to end. ESC/POS has nothing of the kind: the
 # printer never says what it got. The CRC the Worker sends is still checked
 # here, but it only proves D1 -> HTTP -> base64 -> this process. From here to
@@ -244,7 +244,7 @@ class PrinterNoPaper(PrinterError):
 
     The MXW01 had a silent version of this that cost real messages: it accepted
     the whole buffer with no paper, echoed the correct CRC, and the job went to
-    'printed' with nothing on the floor (ETAT 2.11bis). The check below runs
+    'printed' with nothing on the floor. The check below runs
     BEFORE any raster goes out, for the same reason.
     """
 
@@ -541,8 +541,8 @@ class TRP100:
         # paper=None, cover=None, which the agent read as "nothing wrong" and
         # went on claiming jobs. Each one was handed out, failed instantly, and
         # charged an attempt; three rounds of that and a message was dead, for
-        # a reason its author had nothing to do with. The whole point of
-        # ETAT 2.9 is that this must not happen.
+        # a reason its author had nothing to do with. That this must not
+        # happen is the whole point of the rule.
         self.write(bytes([DLE, EOT, n]))
         # Read in slices rather than in one long wait. The first query after
         # ESC @ was the one that timed out on the machine, and a printer that
@@ -624,7 +624,7 @@ class TRP100:
         # The feed goes out only once the image has, so a transfer that dies
         # half way does not also advance the paper past what it managed to
         # print. Never zero: a ticket still under the head is a ticket nobody
-        # can tear off (ETAT 2.10).
+        # can tear off.
         if feed_lines:
             self.write(feed_command(feed_lines))
 

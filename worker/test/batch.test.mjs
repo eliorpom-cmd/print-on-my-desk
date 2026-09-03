@@ -58,7 +58,7 @@ test("the first ticket of a batch is printed last", () => {
 });
 
 // The printer ejects roughly 3 cm of its own accord at the end of every print
-// (docs/09-protocol.md, zone d'ombre 3). At 8 dots/mm that is about 240 lines of paper
+// (docs/09-protocol.md §7.3). At 8 dots/mm that is about 240 lines of paper
 // per print, which dwarfs anything the layout does - and it is the entire
 // reason batches exist. Approximate on purpose: the eject has never been
 // measured precisely, only observed.
