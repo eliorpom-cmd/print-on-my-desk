@@ -82,6 +82,11 @@ It asks four things — **which printer you have** (USB or Bluetooth), your
 Worker's address, your `PRINTER_TOKEN`, and a name for this machine — and does
 everything else. It is safe to run again if a step fails.
 
+The token is the one in `worker/my-tokens.txt` on the machine you set the
+Worker up from, if you used `setup.mjs`. If you cannot find it, set a new one
+with `npx wrangler secret put PRINTER_TOKEN` — nothing else uses it, so
+replacing it costs nothing while only this machine prints.
+
 The name matters if you ever run two of these: the Worker keeps one row per
 device, so two machines sharing a name overwrite each other's status and
 neither is wrong enough to notice.

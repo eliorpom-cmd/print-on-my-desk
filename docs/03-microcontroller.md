@@ -37,7 +37,8 @@ cp firmware/config.example.py firmware/config.py
 ```
 
 Edit `firmware/config.py`: your WiFi, your Worker's address, your
-`PRINTER_TOKEN`. Then:
+`PRINTER_TOKEN` — the one in `worker/my-tokens.txt`, if you set the Worker up
+with `setup.mjs`. Then:
 
 ```sh
 mpremote cp firmware/config.py firmware/main.py firmware/net.py \

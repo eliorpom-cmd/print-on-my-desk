@@ -43,16 +43,34 @@ Do not skip ahead. Each step fails in a way the next one cannot diagnose.
    npx wrangler login          # opens a browser; they click Allow
    npx wrangler d1 create printer
    ```
-   The last command prints a `database_id`. Put it in `wrangler.jsonc`.
+   That last command asks what to call the binding and offers `printer`.
+   **The answer is `DB`** — the Worker asks Cloudflare for `env.DB`, and taking
+   the default adds a second entry while leaving the real one on its
+   placeholder. It fails two steps later as "Invalid uuid".
 
-4. **Secrets.** Three are required. Generate real ones — do not invent
-   memorable strings:
+   On Windows, `npm` and `npx` are PowerShell scripts and the default execution
+   policy refuses to run them. The cure is one command in their terminal,
+   `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, and it is theirs to
+   run, not yours to run for them: it changes a security setting on their
+   machine and they should see it happen. `docs/01-quick-start.md` explains it.
+
+4. **Secrets.** Three are required, and one script does all of it:
    ```sh
-   openssl rand -base64 32
-   npx wrangler secret put PRINTER_TOKEN
-   npx wrangler secret put ADMIN_TOKEN
-   npx wrangler secret put IP_SALT
+   node setup.mjs
    ```
+   It fills in the database id from their account if step 3 did not, generates
+   three 256-bit secrets, uploads them, and writes the two they need again into
+   `my-tokens.txt`, which is gitignored. **Tell them that file matters** before
+   they close it: Cloudflare will not show a secret twice.
+
+   Do not read the tokens back to them in the chat, and do not put them in a
+   commit, a comment, or a file that is not that one.
+
+   By hand, if they would rather watch it happen: generate with
+   `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`
+   — not `openssl`, which does not exist on Windows — and set each with
+   `npx wrangler secret put NAME`.
+
    Also copy `.dev.vars.example` to `.dev.vars` with different values, for
    local runs. `.dev.vars` is gitignored; keep it that way.
 
@@ -75,6 +93,12 @@ Do not skip ahead. Each step fails in a way the next one cannot diagnose.
 
 7. **Then the printer end**, following whichever of `docs/01`, `docs/02` or
    `docs/03` matches step 2.
+
+**If they already have it running and want the latest fixes**, none of the
+above applies: that is `node update.mjs` from the repository root, and
+`docs/11-updating.md` explains what it will and will not touch. Do not
+hand-roll a pull, a schema run and a deploy - the order matters and the script
+has it.
 
 ---
 

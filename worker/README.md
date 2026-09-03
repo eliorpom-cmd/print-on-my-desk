@@ -5,9 +5,11 @@ desk. One Cloudflare Worker and one D1 database.
 
 ```sh
 npm install
-npx wrangler d1 create printer          # paste the id into wrangler.jsonc
-npm run db:remote                       # create the tables
-npx wrangler secret put PRINTER_TOKEN   # and ADMIN_TOKEN, and IP_SALT
+npx wrangler login
+npx wrangler d1 create printer   # answer DB when it asks for a binding name
+node setup.mjs                   # the database id, three secrets, and a
+                                 # my-tokens.txt you keep
+npm run db:remote                # create the tables
 npm run deploy
 ```
 

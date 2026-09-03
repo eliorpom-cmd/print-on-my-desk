@@ -138,6 +138,7 @@ and everything held for your approval. If you point this at a wider audience, re
 | [08 · Troubleshooting](docs/08-troubleshooting.md) | When it does not work |
 | [09 · The protocol](docs/09-protocol.md) | How the Bluetooth printer actually works |
 | [10 · ESC/POS](docs/10-escpos.md) | The 80 mm receipt printer, over USB |
+| [11 · Updating](docs/11-updating.md) | Getting fixes onto your own deployment |
 | [AGENTS.md](AGENTS.md) | For a coding assistant doing this with you |
 
 Contributing, and what gets turned down: [CONTRIBUTING](CONTRIBUTING.md) and

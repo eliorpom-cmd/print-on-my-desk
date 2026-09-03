@@ -58,8 +58,9 @@ Move it closer to the computer, off the WiFi router. The bridge reconnects on
 its own; a drop mid-ticket loses that ticket, not the queue.
 
 **"The token was refused".** The `PRINTER_TOKEN` in the bridge is not the one
-the Worker has. Set it again:
-`npx wrangler secret put PRINTER_TOKEN`, then re-paste.
+the Worker has. The one `worker/my-tokens.txt` records is the one that was set;
+if that does not work either, set a new one with
+`npx wrangler secret put PRINTER_TOKEN` and re-paste it into the bridge.
 
 **It prints, but the paper is blank.** The roll is in upside down. Thermal
 paper only prints on one face.
@@ -93,18 +94,47 @@ optimistically.
 
 ---
 
+## Windows, before anything runs
+
+**`npm.ps1 cannot be loaded because running scripts is disabled on this
+system`.** Nothing to do with this project: Windows refuses to run any script
+by default, and `npm` and `npx` are scripts. One command, for your account
+only, no administrator:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+Or use Command Prompt (`cmd`) instead of PowerShell, which is not affected.
+
+**`'npm' is not recognized`, straight after installing Node.js.** The terminal
+was open before Node was installed and cannot see it. Close it, open a new one.
+
+---
+
 ## The Worker
 
 **The page loads but the status dot never turns green.** The dot reflects your
 printer, not the site. No bridge connected means no green, which is correct.
 
-**`/admin` will not let me in.** Check the token. If you have lost it, set a
-new one: `npx wrangler secret put ADMIN_TOKEN`.
+**`/admin` will not let me in.** Check the token — `worker/my-tokens.txt`, if
+you set it up with `setup.mjs`. Nobody can recover a secret Cloudflare is
+holding, but you can replace it: `npx wrangler secret put ADMIN_TOKEN`, or in
+the dashboard under Workers & Pages, your Worker, Settings, Variables and
+Secrets.
 
 **"D1 daily limit exceeded".** You read five million database rows in a day.
 Either you are extremely popular, or something is reading the queue on a hot
 path. Read [07-operating §4](07-operating.md) and run
 `cd worker && node --test test/d1-cost.test.mjs`.
+
+**`Invalid property: databaseId => Invalid uuid`**, or an error naming
+`PASTE_YOUR_DATABASE_ID_HERE`. Your `wrangler.jsonc` never got the real
+database id. Look at its `d1_databases`: there should be one entry, its
+`binding` should be `DB`, and its `database_id` should be hex with dashes. Two
+entries means `wrangler d1 create` was allowed to name the binding after the
+database — delete the second one and move its id into the `DB` entry.
+`node setup.mjs` fetches the id from your account if you would rather not.
 
 **Deploy fails with "More than one account".** Uncomment `account_id` in
 `wrangler.jsonc` and paste in the one you want; wrangler prints the list.

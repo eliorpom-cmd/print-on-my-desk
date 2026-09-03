@@ -7,6 +7,11 @@ bridge/config.js
 .env
 *.local
 
+# Written by worker/setup.mjs. It holds your admin and printer tokens in plain
+# text, on purpose: they have to live somewhere you can find them again, and
+# Cloudflare will not show them to you twice.
+worker/my-tokens.txt
+
 # Your own word list, once you have written one worth keeping.
 # The starter list ships; yours should not.
 # worker/src/terms.js

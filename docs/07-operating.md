@@ -130,7 +130,9 @@ now. No key opens it; that is the point of having it.
 **The private door** lets you back in while the season is closed, and only you:
 
 ```sh
-openssl rand -base64 24
+node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
+```
+```sh
 npx wrangler secret put ACCESS_KEY
 ```
 
