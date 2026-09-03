@@ -308,7 +308,7 @@ export function renderTicket(text, options = {}) {
  * Renders several tickets onto one continuous strip, for a single print.
  *
  * On the MXW01 this existed for paper: the printer ejected roughly three
- * centimetres of its own accord at the end of every print (PROTOCOL.md 6.2),
+ * centimetres of its own accord at the end of every print (docs/09-protocol.md 6.2),
  * so sixteen tickets sent one at a time cost sixteen of those margins.
  *
  * The TRP 100 III does not do that, and the saving there is a different one:

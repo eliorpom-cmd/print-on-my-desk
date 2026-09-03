@@ -156,6 +156,36 @@ const LONG_POLL_MAX_S = 25;
 // sixty writes - the difference between free-tier arithmetic that works and
 // arithmetic that does not.
 const LONG_POLL_TICK_MS = 1000;
+// Twelve and a half seconds, in thank-yous-only mode, and the number is a
+// budget rather than a preference.
+//
+// The probe is not one row in that mode. It cannot be: proving that none of
+// the payments is still waiting means looking at each of them, and twelve
+// payments cost twenty-four rows however the statement is written. That is the
+// floor for this data model, and the CROSS JOIN of 2 September already reached
+// it - the fix was real, and it left a multiplier behind.
+//
+// The multiplier is this tick. Twenty-five looks per poll, a poll every
+// twenty-five seconds, forever, is 86,400 probes a day: at one row each that
+// is the 86,000 in the budget table, and at twenty-four it is
+// 2.07 million, forty-one per cent of the day's allowance, with the printer
+// idle and the queue not moving. The arithmetic of that table only ever held
+// for the LIVE probe.
+//
+// So the tick is paid for by what a look costs. In LIVE it stays at one
+// second: there the probe IS one row, and a second is what stands between
+// somebody tapping approve and paper moving. In thank-yous-only the only thing
+// that can end the wait is a payment landing on this same Worker's own webhook,
+// nobody is standing at the printer waiting for their own donation, and twelve
+// seconds of latency on a thank-you is invisible. Three looks a poll instead of
+// twenty-five: 249,000 rows a day rather than 2.07 million.
+//
+// Slowing it further is not the answer, and neither is short-polling instead:
+// a 204 sends the Pico straight back, its firmware is frozen, and the long
+// poll is what stops that being a hot loop (pollfloor.js). This tick buys the
+// factor of eight that was there to buy. What it does not buy is room to grow
+// - see IDLE_PROBE_MAX_SUPPORTERS.
+const LONG_POLL_TICK_PAID_MS = 12500;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -186,6 +216,83 @@ export async function anythingApproved(db, onlySupporters = false) {
         WHERE j.status = 'approved' LIMIT 1`
     : "SELECT 1 AS ok FROM jobs WHERE status = 'approved' LIMIT 1";
   return Boolean(await db.prepare(sql).first());
+}
+
+// --- what the idle probe costs, and the day it stops being affordable ------
+
+/** D1's daily allowance on the free plan, which is what all of this is about. */
+const DAILY_ROWS_READ = 5_000_000;
+/** The share of it the thank-yous-only probe is allowed to have. */
+const IDLE_PROBE_SHARE = 0.1;
+
+/**
+ * Rows a day the thank-yous-only probe reads with nothing happening at all.
+ *
+ * Two rows per payment, and that figure is the plan's promise rather than a
+ * guess: `supporters` is the outer loop and `jobs` is entered by rowid once
+ * per row (PICK_SUPPORTER in jobs.js, and the rule in d1-cost.test.mjs that
+ * holds it there). Twelve payments, twenty-four rows, measured in production
+ * on 3 September at exactly that.
+ *
+ * Derived from the constants rather than written down, so that changing the
+ * tick moves the budget with it instead of leaving a stale number in a comment.
+ */
+export function idleProbeRowsPerDay(supporters, tickMs = LONG_POLL_TICK_PAID_MS) {
+  // A look on entry, then one per tick until the deadline.
+  const looksPerPoll = Math.floor((LONG_POLL_MAX_S * 1000) / tickMs) + 1;
+  const pollsPerDay = 86400 / LONG_POLL_MAX_S;
+  return Math.round(looksPerPoll * pollsPerDay * 2 * supporters);
+}
+
+/**
+ * How many payments that budget stretches to. Twenty-four, at the tick above.
+ *
+ * This is the honest limit of the 2 September fix, and it deserves saying
+ * plainly rather than being discovered a third time. `CROSS JOIN` moved the
+ * probe's cost from the queue to the supporters table - five thousand rows to
+ * twelve - and a table five hundred times smaller is not a table that does not
+ * grow. It grows by two rows a day's probing per donation, forever, because a
+ * payment is never undone.
+ *
+ * Past this line the answer is not a slower tick. It is to stop asking
+ * `supporters` the question: a marker on `jobs` written when a priority ticket is
+ * created, with a partial index over it, makes the probe one row whatever the
+ * table holds. That costs a column, a migration and a write path, which is why
+ * it is not here yet - and why the cron says so before the bill does.
+ */
+export const IDLE_PROBE_MAX_SUPPORTERS = Math.floor(
+  (DAILY_ROWS_READ * IDLE_PROBE_SHARE) / idleProbeRowsPerDay(1)
+);
+
+/**
+ * Writes it down, from the cron, when the supporters table outgrows the probe.
+ *
+ * Both days this project lost to D1 were a query whose cost grew on its own
+ * while every test stayed green, and both were noticed by an email from
+ * Cloudflare. This is the same shape of problem caught one donation at a time
+ * instead: a COUNT over twelve rows, once a day, that lands in the operational
+ * memory and shows up at /admin.
+ *
+ * Returns null while there is nothing to say, which is the ordinary case.
+ */
+export async function checkIdleProbeBudget(db, now = Date.now()) {
+  const row = await db.prepare("SELECT COUNT(*) AS n FROM supporters").first();
+  const supporters = Number(row?.n ?? 0);
+  if (supporters <= IDLE_PROBE_MAX_SUPPORTERS) return null;
+  const rows = idleProbeRowsPerDay(supporters);
+  await recordEvent(
+    db,
+    "note",
+    {
+      detail:
+        `${supporters} payments: the idle poll's probe now reads about ` +
+        `${rows.toLocaleString("en")} rows a day, past the ` +
+        `${IDLE_PROBE_MAX_SUPPORTERS} it was budgeted for. It needs a marker ` +
+        `on jobs and a partial index now, not a slower poll.`,
+    },
+    now
+  );
+  return { supporters, rows };
 }
 
 async function handleNext(request, env, url) {
@@ -246,9 +353,15 @@ async function handleNext(request, env, url) {
   const waitS = Math.min(Math.max(Number(url.searchParams.get("wait")) || 0, 0), LONG_POLL_MAX_S);
   if (waitS > 0) {
     const until = Date.now() + waitS * 1000;
+    // What one look costs decides how often it is taken - see the constants.
+    const tick = onlySupporters ? LONG_POLL_TICK_PAID_MS : LONG_POLL_TICK_MS;
     while (!(await anythingApproved(env.DB, onlySupporters))) {
-      if (Date.now() >= until) return nothingFor(deviceId, pollWhenEmpty);
-      await sleep(LONG_POLL_TICK_MS);
+      const left = until - Date.now();
+      if (left <= 0) return nothingFor(deviceId, pollWhenEmpty);
+      // Clamped to what is left of the wait, so a five-second tick cannot hold
+      // the connection open past the deadline the device sized its own read
+      // timeout against.
+      await sleep(Math.min(tick, left));
     }
     // The wait was up to 25 seconds long, and settings were read before it.
     // With two devices on the wire the other one can have finished the run in
@@ -553,7 +666,7 @@ async function handleHeartbeat(request, env, ctx) {
   //
   // This is what answers the question left open on 30 August: the printer went
   // silent for 26 minutes and came back, and nobody could say whether a human
-  // had pressed its button. PROTOCOL.md insists only the button wakes it. If
+  // had pressed its button. docs/09-protocol.md insists only the button wakes it. If
   // an asleep -> awake transition ever lands here with nobody in the flat, the
   // documentation is wrong about the one thing the status page repeats.
   //
@@ -1511,8 +1624,14 @@ export default {
         // submission and one per status poll. Returns null the other 143 times
         // the cron fires.
         const counters = await reseedCounters(env.DB);
+        // Only on the day's reconciliation pass, which is what a non-null
+        // `counters` means. The cron fires every ten minutes; a budget warning
+        // written 144 times a day would bury the operational memory it is
+        // meant to appear in, and would give sweepEvents real work to do for
+        // the first time in its life.
+        const probe = counters ? await checkIdleProbeBudget(env.DB) : null;
         console.log(
-          JSON.stringify({ event: "cron", expired, swept, collected, trimmed, counters })
+          JSON.stringify({ event: "cron", expired, swept, collected, trimmed, counters, probe })
         );
       })()
     );

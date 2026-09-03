@@ -354,7 +354,7 @@ class MXW01:
             "state": payload[0],  # frame[6]
             # Named battery because that is what it reads at rest, but it sags
             # under load - 0x64 down to 0x40 during a full-black block - so it
-            # is a supply reading, not a charge level. PROTOCOL.md 6.2.
+            # is a supply reading, not a charge level. docs/09-protocol.md 6.2.
             "battery": payload[3],  # frame[9]
             "temperature": payload[4],  # frame[10], celsius
             # NOT the paper flag: it stays 0x00 with the roll out. PROTOCOL 3.3

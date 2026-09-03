@@ -522,7 +522,7 @@ class Service:
             # printer does. Asleep, the print fails loudly. With no paper the
             # printer accepts every byte and answers with the correct CRC -
             # it did receive them - so the job would go to 'printed' with
-            # nothing on the floor and no trace anywhere. See PROTOCOL.md 3.3.
+            # nothing on the floor and no trace anywhere. See docs/09-protocol.md 3.3.
             log("poll_skipped", reason="printer_" + self.printer_state)
             return None
 

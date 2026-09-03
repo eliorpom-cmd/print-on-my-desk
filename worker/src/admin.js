@@ -443,7 +443,7 @@ export async function paperUsed(db, settings) {
   // is not the ticket.
   //
   // On the MXW01 that second term was 30 mm: the printer's own end-of-print
-  // eject, never explained (PROTOCOL.md 6.2) and the single biggest waste in
+  // eject, never explained (docs/09-protocol.md 6.2) and the single biggest waste in
   // the system. The TRP 100 III does not do it. What it costs instead is the
   // feed to the tear bar, which is ours and is therefore known exactly.
   const perPrintMm =

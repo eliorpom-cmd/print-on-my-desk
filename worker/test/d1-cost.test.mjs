@@ -28,8 +28,14 @@ import assert from "node:assert/strict";
 import { makeDb } from "./helpers/d1.mjs";
 import { claimJob, claimBatch, completeJob, completeBatch, sweepStaleLeases } from "../src/jobs.js";
 import { decideMany, reprint, requeueFailed } from "../src/admin.js";
-import { anythingApproved } from "../src/index.js";
+import {
+  anythingApproved,
+  checkIdleProbeBudget,
+  idleProbeRowsPerDay,
+  IDLE_PROBE_MAX_SUPPORTERS,
+} from "../src/index.js";
 import { expirePending } from "../src/moderation.js";
+import { recent, sweepEvents } from "../src/events.js";
 import {
   bumpCounter,
   reseedCounters,
@@ -321,9 +327,14 @@ test("the expiry sweep reads nothing while expiry is switched off", async () => 
   // The exact query of 1 September. Both TTLs have been 0 since 29 August, so
   // no job carries an expires_at and this matches nothing - but "matches
   // nothing" was not "reads nothing" until the partial index existed.
+  //
+  // Unanalysed, like production. This ran with an ANALYZE until 3 September,
+  // left over from the fixture the same day removed it from: the plan happens
+  // to be identical either way, because the statement names its index with
+  // INDEXED BY and takes the choice away from the planner. Removing the line
+  // is what proves that rather than assuming it.
   const db = longQueue(makeDb());
   db.raw.prepare("UPDATE jobs SET status = 'pending'").run();
-  db.raw.exec("ANALYZE");
 
   const spy = spyOn(db);
   assert.equal(await expirePending(spy.db), 0);
@@ -332,6 +343,108 @@ test("the expiry sweep reads nothing while expiry is switched off", async () => 
   const plan = planOf(db.raw, select);
   assert.match(plan, /idx_jobs_expiring/, "the partial index must be the one used");
   assertCheap(plan, "the expiry sweep");
+});
+
+test("the events sweep reads nothing while the log is under its cap", async () => {
+  // 3 September, and the disease of 2.1 in a second place. The statement was
+  // `DELETE FROM events WHERE id NOT IN (SELECT id ... ORDER BY at DESC
+  // LIMIT ?)`: correct, and a scan of the whole table to decide that none of
+  // it should go. Measured in production at 2,556 rows a run, 144 runs a day,
+  // 368,000 rows to delete nothing - because the table held 1,119 rows against
+  // a cap of 2,000, which is the state it is in every day it is healthy.
+  const db = makeDb();
+  const insert = db.raw.prepare("INSERT INTO events (at, kind) VALUES (?, 'note')");
+  for (let i = 0; i < 1200; i++) insert.run(1756000000000 + i);
+
+  const spy = spyOn(db);
+  assert.equal(await sweepEvents(spy.db, 2000), 0, "nothing to remove, and nothing removed");
+
+  // The cheap case is cheap by not asking the second question at all.
+  assert.equal(spy.seen.length, 1, "under the cap it must read one row and stop:\n" + spy.seen);
+  assert.doesNotMatch(
+    planOf(db.raw, spy.seen[0]),
+    /SCAN events\b(?! USING)/,
+    "and the row it does read must be a seek"
+  );
+
+  // The old statement, kept so the rule is held against the thing it is for.
+  const OLD = `DELETE FROM events WHERE id NOT IN (
+                 SELECT id FROM events ORDER BY at DESC, id DESC LIMIT 2000
+               )`;
+  assert.match(planOf(db.raw, OLD), /SCAN events\b(?! USING)/, "the old form scanned the table");
+});
+
+test("the events sweep still trims, and to exactly the cap", async () => {
+  // Cheap is not the only requirement: the table has to stay bounded, and the
+  // rewrite changed how the cutoff is worked out. `id` is AUTOINCREMENT and
+  // this only ever deletes from the bottom, so `MAX(id) - keep` is the same
+  // set of rows the sort used to pick - and that has to be true in a test and
+  // not only in a comment.
+  const db = makeDb();
+  const insert = db.raw.prepare("INSERT INTO events (at, kind) VALUES (?, 'note')");
+  for (let i = 0; i < 2600; i++) insert.run(1756000000000 + i);
+
+  const spy = spyOn(db);
+  assert.equal(await sweepEvents(spy.db, 2000), 600, "the oldest 600 go");
+  assert.equal(db.raw.prepare("SELECT COUNT(*) AS n FROM events").get().n, 2000);
+  assert.equal(
+    db.raw.prepare("SELECT MIN(at) AS a FROM events").get().a,
+    1756000000600,
+    "and what is kept is the newest, not an arbitrary 2000"
+  );
+
+  const del = spy.seen.find((sql) => /^DELETE/.test(sql.trim()));
+  assert.match(
+    planOf(db.raw, del),
+    /INTEGER PRIMARY KEY/,
+    "the delete must reach its rows by rowid, not by walking the table"
+  );
+});
+
+test("a day of idle long polling fits in a tenth of the allowance", async () => {
+  // The multiplier the CROSS JOIN left behind, as arithmetic rather than as a
+  // paragraph. On 2 September the probe cost 2,651 rows and ran once a second;
+  // the fix took the 2,651 to 24 and left the once-a-second alone, which is
+  // 2.07 million rows a day with the printer idle - forty-one per cent of the
+  // allowance for a queue that is not moving.
+  //
+  // Twelve payments is what the supporters table held when this was written.
+  const TODAY = 12;
+  const budget = 5_000_000 * 0.1;
+
+  assert.ok(
+    idleProbeRowsPerDay(TODAY) <= budget,
+    `the idle probe reads ${idleProbeRowsPerDay(TODAY)} rows a day, over its ${budget}`
+  );
+  // What the tick was before, held here so a change back is a failing test and
+  // not a slow month.
+  assert.ok(
+    idleProbeRowsPerDay(TODAY, 1000) > 2_000_000,
+    "one look a second is what this test exists to refuse"
+  );
+  // And the limit of the whole approach, stated where it will be read.
+  assert.equal(
+    IDLE_PROBE_MAX_SUPPORTERS,
+    24,
+    "past this many payments the probe needs a marker on jobs, not a slower tick"
+  );
+});
+
+test("the cron says so when the supporters table outgrows the probe", async () => {
+  const db = makeDb();
+  const insert = db.raw.prepare(
+    `INSERT INTO supporters (source_id, job_id, kind, received_at)
+     VALUES (?, ?, 'Donation', 0)`
+  );
+
+  for (let i = 0; i < IDLE_PROBE_MAX_SUPPORTERS; i++) insert.run(`paid-${i}`, 9000 + i);
+  assert.equal(await checkIdleProbeBudget(db), null, "at the line, nothing to report");
+
+  insert.run("paid-over", 9999);
+  const warned = await checkIdleProbeBudget(db);
+  assert.equal(warned.supporters, IDLE_PROBE_MAX_SUPPORTERS + 1);
+  const [note] = await recent(db, 1);
+  assert.match(note.detail, /idle poll/, "and it lands where somebody will read it");
 });
 
 // --- the counters ----------------------------------------------------------
@@ -556,26 +669,36 @@ test("the desk does not count what is waiting", async () => {
   );
 });
 
-test("the paper gauge seeks to the roll change rather than reading every print", async () => {
+test("the paper gauge seeks to the roll change, with statistics and without", async () => {
   const { paperUsed } = await import("../src/admin.js");
-  // A third printed, the rest still queued. The mix matters: with every row
-  // printed, `status = 'printed'` narrows nothing and SQLite is right to sweep
-  // the table instead - a fixture where the index cannot win is not a test of
-  // whether the index is used.
-  const db = longQueue(makeDb());
-  db.raw
-    .prepare(
-      "UPDATE jobs SET status='printed', printed_at=created_at, lines=140 WHERE id % 3 = 0"
-    )
-    .run();
-  db.raw.exec("ANALYZE");
 
-  const spy = spyOn(db);
-  await paperUsed(spy.db, { roll_changed_at: "1756000002000", roll_length_m: "80" });
+  // This test ran with an ANALYZE until 3 September, and that was the flaw of
+  // 2 September still in the file: the fixture that had one was corrected that
+  // day, these two were not, and a plan measured on an analysed database is a
+  // plan production does not run. It is checked in both states now rather than
+  // in the convenient one - the gauge's index turns out to win either way,
+  // which is a fact worth holding rather than a coincidence worth relying on.
+  const printed = (db) => {
+    // A third printed, the rest still queued. The mix matters: with every row
+    // printed, `status = 'printed'` narrows nothing and SQLite is right to
+    // sweep the table instead - a fixture where the index cannot win is not a
+    // test of whether the index is used.
+    db.raw
+      .prepare(
+        "UPDATE jobs SET status='printed', printed_at=created_at, lines=140 WHERE id % 3 = 0"
+      )
+      .run();
+    return db;
+  };
 
-  const sum = spy.seen.find((sql) => /SUM\(lines\)/.test(sql));
-  assert.ok(sum, "the gauge must still sum something");
-  const plan = planOf(db.raw, sum);
-  assert.match(plan, /idx_jobs_printed/, "it must seek, not sweep");
-  assertCheap(plan, "the paper gauge");
+  for (const db of [printed(longQueue(makeDb())), analysed(printed(longQueue(makeDb())))]) {
+    const spy = spyOn(db);
+    await paperUsed(spy.db, { roll_changed_at: "1756000002000", roll_length_m: "80" });
+
+    const sum = spy.seen.find((sql) => /SUM\(lines\)/.test(sql));
+    assert.ok(sum, "the gauge must still sum something");
+    const plan = planOf(db.raw, sum);
+    assert.match(plan, /idx_jobs_printed/, "it must seek, not sweep");
+    assertCheap(plan, "the paper gauge");
+  }
 });
