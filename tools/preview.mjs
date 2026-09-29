@@ -10,7 +10,7 @@
 //   node tools/preview.mjs --ascii "Hello"      -> to the terminal
 //   node tools/preview.mjs --probe 32           -> the transport test pattern
 //   node tools/preview.mjs --out /tmp/x.png "Texte"
-//   node tools/preview.mjs --profile mxw01 "x"  -> le ticket 58 mm, en pause
+//   node tools/preview.mjs --profile mxw01 "x"  -> the 58 mm ticket, paused
 //
 // With no --profile, the printer in service: the TRP 100 III since 31 August.
 
